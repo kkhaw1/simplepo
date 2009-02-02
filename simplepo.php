@@ -1,0 +1,96 @@
+<?php
+require('config.php');
+require('DB.php');
+
+class SimplePO{
+  public $force;
+  public $infile;
+  public $outfile;
+  public $catalogue_name;
+
+function main($argc, $argv){
+  $this->parseArguments($argc, $argv);
+  
+}
+
+function parseArguments($argc, $argv){
+  $flags = array(
+                   "version" => array("-v","--version"),
+                   "install" =>array("--install"),
+                   "force" => array("-f", "--force")
+  );
+
+  $options = array(
+                    "inputfile" => array("-i","--inputfile"),
+                    "outputfile" => array("-o","outputfile"),
+                    "catalogue_name" => array("-n","--name")
+  );
+
+for($i=1; $i < count($argv); $i++) {
+    $a = $argv[$i];
+    if(in_array($a,$flags['version'])) {
+      $this->usage();
+      exit(0);
+    }
+    if( in_array($a, $flags['install']) ){
+      $this->install($force);
+    }
+    if ( in_array($a, $flags['force']) ){
+      $this->force = true;
+    }
+    if ( in_array($a, $options['inputfile']) ){
+      $this->infile = $argv[$i+1];
+    }
+    if ( in_array($a, $options['outputfile']) ){
+      $this->outfile = $argv[$i+1];
+    }
+    if ( in_array($a, $options['catalogue_name']) ){
+      $this->catalogue_name = $argv[$i+1];
+    }
+  }
+
+}
+
+function usage() {
+  echo "This is how you use this prigram.\n";
+}
+
+function install( $overwrite =false ){
+  global $simplepo_config;
+  $create_message =<<<CM
+    CREATE TABLE IF NOT EXISTS `{$simplepo_config['table_prefix']}messages` (
+      `id` int(11) NOT NULL auto_increment,
+      `catalogue_id` int(11) NOT NULL,
+      `msgid` text NOT NULL,
+      `msgstr` text NOT NULL,
+      `comments` text NOT NULL,
+      `extracted_comments` text NOT NULL,
+      `reference` text NOT NULL,
+      `flag` text NOT NULL,
+      `obsolete` text NOT NULL,
+      `previous_untranslated_string` text NOT NULL,
+      `fuzzy` tinyint(1) NOT NULL,
+      `updated_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+      PRIMARY KEY  (`id`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1
+CM;
+
+  $create_catalogue = <<<CM
+    CREATE TABLE IF NOT EXISTS `{$simplepo_config['table_prefix']}catalogues` (
+      `id` int(11) NOT NULL auto_increment,
+      `description` varchar(100) NOT NULL,
+      PRIMARY KEY  (`id`),
+      UNIQUE KEY `description` (`description`)
+    ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+CM;
+
+  $q = new Query();
+  $q->sql($create_catalogue)->execute();
+  $q->sql($create_message)->execute();
+  echo "Installation complete\n";
+}
+
+}
+
+$s = new SimplePO();
+$s->main($argc, $argv);
