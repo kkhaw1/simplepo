@@ -1,17 +1,17 @@
 <?php
-require_once(dirname(__FILE__) . '/../config/config.php');
-require_once('DB.php');
-
 interface ParseHandler{
   public function write( $msg, $isHeader );
 }
 
-class DBWriter implements ParseHandler{
+class DBHandler implements ParseHandler{
   public function init( $filename ){
-    $q = new Query(); 
-    $arr = $q->sql("Select * from po_catalogues where description = ?", $filename)->fetchAll();
+    global $simplepo_config;
+    $q = new Query();
+    $qry = "Select * from ". $simplepo_config['table_prefix'] ."catalogues where description = ?";
+    $arr = $q->sql($qry, $filename)->fetchAll();
     if (!$arr){
-      $q->sql("Insert into po_catalogues (description) values (?)", $filename)->execute();
+      $qry = "Insert into ". $simplepo_config['table_prefix'] ."catalogues (description) values (?)";
+      $q->sql($qry, $filename)->execute();
       $this->catalogue_id = $q->insertId();
     } else {
       $this->catalogue_id = $arr[0]['id'];
@@ -19,6 +19,7 @@ class DBWriter implements ParseHandler{
   }
 
   public function write( $msg, $isHeader ){
+    global $simplepo_config;
     $q = new Query();
     if ( !$msg["msgid"] ) $msg["msgid"] = "";
     if ( !$msg["msgstr"] ) $msg["msgstr"] = "";
@@ -30,9 +31,19 @@ class DBWriter implements ParseHandler{
     if ( !$msg["previous-untranslated-string"] ) $msg["previous-untranslated-string"] = "";
     if ( $msg["fuzzy"] == NULL ) $msg["fuzzy"] = false;
 
-    $q->sql("Insert into po_messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
+    $qry = "Insert into ". $simplepo_config['table_prefix'] ."messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $q->sql("Insert into simplepo_messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
                         $msg["reference"], $msg["flag"], $msg["obsolete-message"], $msg["previous-untranslated-string"], $msg["fuzzy"])->execute();
+  }
+
+  public function read(){
+    global $simplepo_config;
+    $q = new Query();
+    $qry = "Select * from " . $simplepo_config['table_prefix'] . "messages where catalogue_id = ?";
+    $res = $q->sql($qry, $this->catalogue_id)->fetchAll();
+    return  $res;
   }
 }
 
@@ -41,8 +52,8 @@ class POParser{
   protected $context = array();
   public $parseHandler;
 
-  public function __construct( $filename, $pH ){
-    $this->fileHandle = fopen($filename, 'r');
+  public function __construct( $fH, $pH ){
+    $this->fileHandle = $fH;
     if ($this->fileHandle === false){
       throw new Exception("Could not open file.");
     }
@@ -156,6 +167,56 @@ class POParser{
         $entry_lines = array();
       }
     }
-    
+  }
+
+  public function encodeStringFormat( $str ){
+    $width = 70;
+    $retVal = "";
+    $str = explode("\n", $str);
+    if ( count($str) == 1 ) {
+      if ( strlen( $str[0] ) > $width ){
+        $retVal = "\"\"\n\"" . wordwrap($str[0], $width, "\"\n\"") . "\"\n";
+      } else{
+        $retVal = "\"" . $str[0] . "\"\n";
+      }
+      return $retVal;
+    }
+
+    $retVal .= "\"\"\n";
+    for ($i = 0; $i < count($str) - 1; $i++ ){
+      if (strlen($str[$i]) > $width) {
+        $retVal .= "\"" . wordwrap($str[$i], $width, "\"\n\"") . "\\n\"\n";
+      }else{
+        $retVal .= "\"" . $str[$i] . "\\n\"\n";
+      }
+    }
+    return $retVal;
+  }
+
+  public function addMessage( $entry ){
+    //comment, extr comments, Reference, flag/fuzzy, prev-untr-str, obsolete, msgid, msgstr
+    $prefix = array("comments"=>"# ", "extracted_comments"=>"#. ", "reference"=>"#: ", "flag"=>"#, ", "previous_untranslated_string"=>"#| ", "obsolete"=>"#~ ");
+    $msg = "";
+    foreach ( $entry as $k=>&$v ){
+      if ( in_array( $k, array("comments", "extracted_comments", "reference", "obsolete") ) && $entry[$k] ){
+        $msg .= $prefix[$k] . str_replace("\n", "\n" . $prefix[$k], $v) . "\n";
+      }
+      $msg .= ( $entry['fuzzy'] ) ? $prefix["flag"] . "fuzzy\n" : ""; $entry["fuzzy"] = 0;
+      if (in_array( $k, array("flag", "previous_untranslated_string") ) && $entry[$k]){
+        $msg .= $prefix[$k] . $v . "\n";
+      }
+    }
+
+    $msg .= ($entry['msgid']) ? "msgid " . $this->encodeStringFormat($entry['msgid']) : "";
+    $msg .= ($entry['msgid']) ? "msgstr " . $this->encodeStringFormat($entry['msgstr']) : "";
+    $msg .= "\n";
+    fwrite($this->fileHandle, $msg);
+  }
+
+  public function create(){
+    $res = $this->parseHandler->read();
+    for ( $i = 0; $i < count($res); $i++){
+      $this->addMessage($res[$i]);
+    }
   }
 }
