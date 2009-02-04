@@ -170,7 +170,7 @@ class POParser{
   }
 
   public function encodeStringFormat( $str ){
-    $width = 70;
+    $width = 75;
     $retVal = "";
     $str = explode("\n", $str);
     if ( count($str) == 1 ) {
@@ -195,7 +195,7 @@ class POParser{
 
   public function addMessage( $entry ){
     //comment, extr comments, Reference, flag/fuzzy, prev-untr-str, obsolete, msgid, msgstr
-    $prefix = array("comments"=>"# ", "extracted_comments"=>"#. ", "reference"=>"#: ", "flag"=>"#, ", "previous_untranslated_string"=>"#| ", "obsolete"=>"#~ ");
+    $prefix = array("comments"=>"# ", "extracted_comments"=>"#. ", "reference"=>"#: ", "flag"=>"#, ", "previous_untranslated_string"=>"#| msgid ", "obsolete"=>"#~ ");
     $msg = "";
     foreach ( $entry as $k=>&$v ){
       if ( in_array( $k, array("comments", "extracted_comments", "reference", "obsolete") ) && $entry[$k] ){
@@ -207,8 +207,8 @@ class POParser{
       }
     }
 
-    $msg .= ($entry['msgid']) ? "msgid " . $this->encodeStringFormat($entry['msgid']) : "";
-    $msg .= ($entry['msgid']) ? "msgstr " . $this->encodeStringFormat($entry['msgstr']) : "";
+    $msg .= (!$entry['obsolete']) ? "msgid " . $this->encodeStringFormat($entry['msgid']) : "";
+    $msg .= (!$entry['obsolete']) ? "msgstr " . $this->encodeStringFormat($entry['msgstr']) : "";
     $msg .= "\n";
     fwrite($this->fileHandle, $msg);
   }
