@@ -32,7 +32,7 @@ function main($argc, $argv){
     $this->fileHandle = fopen( $this->outfile, 'w');
     $this->POParser = new POParser( $this->fileHandle, $this->pHandler);
     $this->POParser->create();
-    echo "$this->outfile successfully written";
+    echo "$this->outfile successfully written\n";
     return;
   }
   $this->usage();
