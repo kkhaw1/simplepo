@@ -1,5 +1,7 @@
 <?php
-require_once('config.php');
+
+
+(@include_once('config.php')) || die("You must create a config.php file\nsee config-sample.php\n");
 require_once('DB.php');
 require_once('POParser.php');
 
