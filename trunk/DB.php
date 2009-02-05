@@ -2,14 +2,32 @@
 
 class SQLException extends Exception {}
 
+class DBConnection {
+	
+	private static $link;
+	
+	private function __construct() { }
+	
+	public static function getInstance() {
+		global $simplepo_config;
+		if(!self::$link)
+			self::$link = mysql_connect( $simplepo_config['db_host'], $simplepo_config['db_user'], $simplepo_config['db_pass'] );
+			mysql_select_db( $simplepo_config['db_name'] );
+		return self::$link;
+	}
+}
+
 class Query {
 
 	private $sql;
 	private $cursor;
+	private $link;
 
-	function __construct() {
+	function __construct($link = null) {
 		$this->sql = "";
-
+		if(!$link) {
+			$this->link = DBConnection::getInstance(); 
+		}
 	}
 	function reset() {
 		if($this->cursor) {
@@ -80,13 +98,13 @@ class Query {
 		if(!$this->cursor) {
 				$this->makeCursor();
 		}
-		return mysql_affected_rows();
+		return mysql_affected_rows($this->link);
 	}
 	function insertId() {
 		if(!$this->cursor) {
 			$this->makeCursor();
 		}
-		return mysql_insert_id();
+		return mysql_insert_id($this->link);
 	}
 	function execute() {
 		$this->makeCursor();
@@ -118,7 +136,7 @@ class Query {
 		return $r;
 	}
 	protected function makeCursor() {
-		$this->cursor = mysql_query($this->sql);
+		$this->cursor = mysql_query($this->sql,$this->link);
 		if($this->cursor === false) {
 			$err = $this->getError();
 			throw new SQLException("\n" . $err ."\n");
@@ -144,7 +162,7 @@ class Query {
 				return "NULL";
 			}
 		} elseif (is_null($value)) {
-			return "NULL";
+			return "''";
 		} else {
 			return "'" . mysql_real_escape_string($value) . "'";
 		}

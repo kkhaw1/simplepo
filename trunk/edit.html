@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <title>Simple PO - Edit Catalogue - </title>
+  <link rel="stylesheet" href="/incl/css/master.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="/incl/css/edit.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script src="/incl/js/jquery-1.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="/incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" charset="utf-8">
+  
+    $.messageService = function(method, params,callback,error_handler) {
+      $.post('message_service.php',
+          {request:JSON.stringify(
+            {"method":method,
+             "params":params,
+              "id":Math.random()
+              }
+          )},
+          function(obj) {
+            if(obj.error) {
+              error_handler ? error_handler(obj.error) : $('#errors').text(obj.error.message);
+            } else {
+              callback(obj.result);
+            }
+          },
+          "json"
+      );     
+    };
+    $.messageService('getMessages',[1],function(data){
+      //console.log(data);
+    });
+    $.messageService('makeError',[1,"foo"],function(data){
+     
+    });
+    
+     
+    $(function() {
+      var i =0;
+      $('#msg_table tr').each(function(){$(this).addClass(i++ %2 == 0 ? "odd" : "")});
+      $('#edit_bar .block h3 a').click(function(){
+        $(this).parents('.block').find('.data').toggle();
+      });
+      $('#msg_table td').live("click",function() {
+        $(this).parents('table').find('tbody tr').removeClass('selected');
+        $(this).parent('tr').addClass('selected')
+      });
+      kk();
+    }); 
+  function kk() {
+    for(var i=0;i<3;i++)
+    $('#msg_table tr').after($('#msg_table tr').clone());
+    var i =0;
+    $('#msg_table tr').each(function(){$(this).toggleClass(i++ %2 == 0 ? "odd" : "")});
+  }
+  </script>
+</head>
+<body><div id="body_w">
+  <div id="errors">Errors Go Here</div>
+  <div id="messages">Messages Go Here</div>
+  <div id="nav">
+    <a href="#">Simple Po</a> 
+    <a href="index.html" id="cat">Catalogue</a> 
+    <div class="left">
+      
+      <span id="cat_name">French Yabla</span>
+    </div>
+    <div class="right">
+      <div id="cat_select">
+      Switch Catalogue:
+        <select id="cataloge_list">
+          <option value="1">Catalogue 1</option>
+          <option value="2">Catalogue 2</option>
+          <option value="3">Catalogue 3</option>
+          <option value="4">Catalogue 4</option>
+        </select>
+      </div>
+    </div>
+    <div style="clear:both"> </div>
+  </div>
+  
+  <div id="edit_bar">
+    <div class="block">
+      <h3><a href="#" id="ref_head" class="expand">Reference</a></h3>
+      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+    </div>
+    <div class="block">
+      <h3><a href="#" id="src_loc_head" class="expand">Source Location</a></h3>
+      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+    </div>
+    <div class="block">
+      <h3><a href="#" id="src_com_head" class="expand">Source Comments</a></h3>
+      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+    </div>
+    <h3>Original String (msgid)</h3>
+    <textarea id="msgid"></textarea>
+    <h3>Translation (msgstr)</h3>
+    <textarea id="msgstr"></textarea>
+      
+    
+  </div>
+  <div id="message_container">
+    <table id="msg_table_head">
+      <thead><tr>
+        <th class="msgid">Original String</th>
+        <th class="msgstr">Translation</th>
+        <th class="fuzzy"><a href="#" title="Fuzzy">F</a></th>
+        <th class="depr"><a href="#" title="Deprecated">D</a></th>
+      </tr></thead></table>
+      <div id="scroll_container">
+      <table id="msg_table"><tbody>
+        <tr>
+          <td class="msgid"><div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div></td>
+          <td class="msgstr"><div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div></td>
+          <td class="fuzzy">F</td>
+          <td class="depr">D</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+  </div>
+  <div id="foot">
+    This is the footer
+  </div>  
+</div></body>
+</html>
