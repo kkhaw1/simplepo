@@ -167,6 +167,10 @@ class POParser{
         $entry_lines = array();
       }
     }
+    if ( $entry_lines ){
+      $entry = $this->reduceLines($entry_lines);
+      $this->saveEntry( $entry, $entry_count++ );
+    }
   }
 
   public function encodeStringFormat( $str ){
@@ -183,7 +187,7 @@ class POParser{
     }
 
     $retVal .= "\"\"\n";
-    for ($i = 0; $i < count($str) - 1; $i++ ){
+    for ($i = 0; $i < count($str) && $str[$i]; $i++ ){
       if (strlen($str[$i]) > $width) {
         $retVal .= "\"" . wordwrap($str[$i], $width, "\"\n\"") . "\\n\"\n";
       }else{
