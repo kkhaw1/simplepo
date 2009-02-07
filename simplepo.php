@@ -53,6 +53,7 @@ function parseArguments($argc, $argv){
                     "catalogue_name" => array("-n","--name")
   );
 
+  $installCmd = false;
   for($i=1; $i < count($argv); $i++) {
       $a = $argv[$i];
       if(in_array($a,$flags['version'])) {
@@ -60,36 +61,48 @@ function parseArguments($argc, $argv){
         exit(0);
       }
       if( in_array($a, $flags['install']) ){
-        $this->install($force);
-        exit(0);
+        $installCmd = true;
       }
       if ( in_array($a, $flags['force']) ){
         $this->force = true;
       }
       if ( in_array($a, $options['inputfile']) ){
-        $this->infile = $argv[$i+1];
+        $this->infile = ( ($i+1) < count($argv) ) ? ($argv[$i+1]) : die("   Please provide input filename.\n");
       }
       if ( in_array($a, $options['outputfile']) ){
-        $this->outfile = $argv[$i+1];
+        $this->outfile = ( ($i+1) < count($argv) ) ? ($argv[$i+1]) : die("   Please provide input filename.\n");
       }
       if ( in_array($a, $options['catalogue_name']) ){
-        $this->catalogue_name = $argv[$i+1];
+        $this->catalogue_name = ( ($i+1) < count($argv) ) ? ($argv[$i+1]) : die("   Please provide input filename.\n");
       }
     }
-
+    if ($installCmd){
+      $this->install($this->force);
+      exit(0);
+    }
 }
 
 function usage() {
+  echo "   ________________________________________\n";
   echo "\n\t\tSimplePO\n";
-  echo "   This is how you use this prigram.\n";
+  echo "   ________________________________________\n";
   echo "   Flags:\n";
-  echo "  \tversion:\t-v\t--version\n";
-  echo "  \tinstall:\t\t--install\n";
-  echo "  \tforce:  \t-f\t--force\n";
+  echo "   \tversion:\t-v\t--version\n";
+  echo "   \tversion:\t \t--install\n";
+  echo "   \tforce:\t-f\t--force\n";
   echo "   Options:\n";
   echo "  \t-i\tinputfilename\n";
   echo "  \t-o\toutputfilename\n";
   echo "  \t-n\tcataloguename\n\n";
+  echo "   This is how you use this program:\n";
+  echo "     To install:\n";
+  echo "  \tphp simplepo.php --install\n";
+  echo "  \tphp simplepo.php --force --install\n";
+  echo "  \tphp simplepo.php -f --install\n\n";
+  echo "     To read in a PO file:\n";
+  echo "  \tphp simplepo.php -n CatalogueName -i inputfilename\n";
+  echo "     To write to a PO file:\n";
+  echo "  \tphp simplepo.php -n CatalogueName -o outputfilename\n\n";
 }
 
 function install( $force ){
@@ -122,12 +135,13 @@ CM;
 CM;
 
   $q = new Query();
-  if ($force){
+  if ($this->force){
+    echo "\tForced Installation taking place...\n";
     $q->sql("DROP TABLE IF EXISTS " . $simplepo_config['table_prefix'] . "catalogues, " . $simplepo_config['table_prefix'] . "messages")->execute();
   }
   $q->sql($create_catalogue)->execute();
   $q->sql($create_message)->execute();
-  echo "\n\tInstallation complete!\n\n";
+  echo "\tInstallation complete!\n\n";
 }
 
 }
