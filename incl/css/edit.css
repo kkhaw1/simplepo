@@ -17,6 +17,7 @@ body,html {
 	width:70%;
 	padding:4px 10px;
 	z-index:1;
+	display:none;
 }
 #messages {
 	position:fixed;
@@ -25,11 +26,12 @@ body,html {
 	width:70%;
 	padding:4px 10px;
 	z-index:1;
+	display:none;
 }
 #nav {
 	margin:0;
 	margin-bottom:10px;
-	background: #E4E4E4 url('/incl/img/navbg.gif') scroll repeat-x 0 0;
+	background: #E4E4E4 url('../img/navbg.gif') scroll repeat-x 0 0;
 	padding:1px 0;
 	padding-right:10px;
 	border:1px solid #AAA;
@@ -66,34 +68,68 @@ body,html {
 	float:right;
 }
 #edit_bar {
-	position:fixed;
-	width:360px;
-	/*overflow-y:auto;*/
-	/*overflow-x:hidden;*/
 	float:left;
+	width:360px;
+	overflow-y:auto;
+	overflow-x:hidden;
 	padding:0 5px 0px 12px;
 }
 #edit_bar h3{
 	margin:0;
 	font-size:10pt;
 }
-#edit_bar textarea{
-	width:100%;
-	height:8em;
+#edit_bar .block textarea.data{
+	width:95%;
+	height:90px;
+	border:none;
+	background-color:#DDF;
+	border-left:1px solid #CCC;
+	border-bottom:1px solid #CCC;
+	border-right:1px solid #CCC;
 }
 #edit_bar .block {
 	margin-bottom:6px;
 }
 #edit_bar .block .data {
 	margin:0;
+	height:90px;
 	background-color:#FFF;
 	border-left:1px solid #CCC;
 	border-bottom:1px solid #CCC;
 	border-right:1px solid #CCC;
 	padding:5px 8px 9px;
 }
-#edit_bar .block h3 {
-	background:#DFDFDF url('/incl/img/gray-grad.png') repeat-x scroll top left;
+#edit_bar .block #edit_bar_table {
+	width:100%;
+	cursor:pointer;
+}
+#edit_bar .block #edit_bar_table #ref_head, #edit_bar .block #edit_bar_table #update_head, #edit_bar .block #edit_bar_table #src_com_head {
+	color:#555;
+	font-weight:bold;
+	text-align:left;
+}
+#edit_bar .block #edit_bar_table #ref_head {
+	width:25%;
+}
+#edit_bar .block #edit_bar_table #update_head{
+	width:38%;
+	text-align:center;
+	border-right:1px solid #AAA;
+	border-left:1px solid #AAA;
+}
+#edit_bar .block #edit_bar_table #src_com_head{
+	text-align:right;
+}
+#ref_data, #update_data, #com_data {
+	display:none;
+	position:absolute;
+	text-align:center;
+	width:200px;
+	background-color:#EEE;
+	border: 1px solid #999;
+}
+#edit_bar .block h3, #edit_bar .block #edit_bar_table {
+	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
 	border:1px solid #CCC;
 	font-size:10pt;
 	margin:0;
@@ -114,44 +150,58 @@ body,html {
 #edit_bar .block h3 a:hover {
 	color:#222;
 }
+#edit_bar #msgid {
+	overflow-x:hidden;
+	overflow-y:auto;
+}
+#id, #idx, #edit_id, #edit_idx {
+	display:none;
+	width:20px;
+}
+#next {
+	padding:5px;
+    margin-left:20px;
+	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
+	border:1px solid #CCC;
+}
 #msg_list {
   
 }
 #message_container {
-	float:left;
-	margin-left:410px;
+    margin-left:410px;
 }
 #msg_table {
 	table-layout:fixed;
 	border-collapse:collapse;
 	border:1px solid #CCC;
-	width:800px;
+	
 }
 #msg_table_head {
-	width:800px;
 	table-layout:fixed;
 	border-collapse:collapse;
 	border:1px solid #CCC;
 }
 #msg_table_head th {
  text-align:left;
- background: #E4E4E4 url('/incl/img/navbg.gif') scroll repeat-x 0 0;
+ background: #E4E4E4 url('../img/navbg.gif') scroll repeat-x 0 0;
  border-left:1px solid #DDD;
  color:#111;
  padding:8px 0;
+}
+#msg_table_head th a {
+    text-decoration:none;
+    color:#111;
 }
 #scroll_container {
 	height:500px;
 	overflow-y:auto;
 	overflow-x:hidden;
-	width:820px;
 }
 #msg_table td {
 	background-color:#FFF;
 	padding:6px 0;
 	cursor:pointer;
 }
-
 #msg_table td.fuzzy,#msg_table td.depr,#msg_table_head th.fuzzy,#msg_table_head th.depr {
 	width:20px;
 	text-align:center;
@@ -167,6 +217,13 @@ body,html {
 #msg_table tr.selected td {
 	background-color:#136aca;
 	color:#FFF;
+}
+#msg_table td.fuzzy.f, #msg_table td.depr.d {
+	color:#F00;
+	font-weight:bold;
+}
+#msg_table tr.selected td.fuzzy.f, #msg_table tr.selected td.depr.d {
+	color:#000;
 }
 #msg_table td div {
 	height:1.3em;

@@ -5,7 +5,7 @@ require_once('config.php');
 require_once('DB.php');
 
 $rpc = new JSON_RPC(new MessageService());
-echo $rpc->getResponse($_POST['request']);
+echo $rpc->getResponse($_POST["request"]);
 
 class JSON_RPC {
 	
@@ -17,7 +17,7 @@ class JSON_RPC {
 	function getResponse($request_string) {
 		$request = json_decode($request_string,true);
 		$response = array('error'=>null);
-		
+
 		if($request['id'])
 			$response['id'] = $request['id'];
 
@@ -40,10 +40,20 @@ class MessageService {
 	function __construct() {
 		
 	}
-	function getMessages($id) {
-		$q = new Query();
-		return $q->sql("SELECT * FROM simplepo_messages WHERE catalogue_id=?",$id)->fetchAll();
+	function getMessages($id, $sortBy) {
+      $q = new Query();
+      $order = ($sortBy == "fuzzy" || $sortBy == "obsolete") ? "DESC" :  "" ;
+      return $q->sql("SELECT * FROM simplepo_messages WHERE catalogue_id=? ORDER BY $sortBy $order", $id)->fetchAll();
 	}
+    function getCatalogues(){
+      $q = new Query();
+      return $q->sql("SELECT * FROM simplepo_catalogues")->fetchAll();
+    }
+    function updateMessage($id, $comments, $msgstr, $fuzzy){
+      $q = new Query();
+      $q->sql("UPDATE simplepo_messages SET comments=?, msgstr=?, fuzzy=? WHERE id=?", $comments, $msgstr, $fuzzy, $id)->execute();
+      return "UPDATE simplepo_messages SET comments='$comments', msgstr='$msgstr' WHERE id='$id'";
+    }
 	function makeError() {
 		throw new Exception("This is an error");
 	}
