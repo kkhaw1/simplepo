@@ -3,12 +3,15 @@
 <html>
 <head>
   <title>Simple PO - Edit Catalogue - </title>
-  <link rel="stylesheet" href="/incl/css/master.css" type="text/css" media="screen" title="no title" charset="utf-8">
-  <link rel="stylesheet" href="/incl/css/edit.css" type="text/css" media="screen" title="no title" charset="utf-8">
-  <script src="/incl/js/jquery-1.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="/incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
+  <link rel="stylesheet" href="incl/css/master.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="incl/css/edit.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script src="incl/js/jquery-1.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
-  
+    var msgs, dirty=false, currIdx = 1, cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
+    cat_id = cat_id.substring( cat_id.indexOf('cat_id') + 7 );
+    cat_id = (cat_id == "") ? 1 : parseInt(cat_id);
+
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
           {request:JSON.stringify(
@@ -27,53 +30,195 @@
           "json"
       );     
     };
-    $.messageService('getMessages',[1],function(data){
-      //console.log(data);
-    });
-    $.messageService('makeError',[1,"foo"],function(data){
-     
+
+    var getCatalogues = function( catId ){
+      $.messageService('getCatalogues', [], function(data){
+        if (data.length == 0){
+          $('#errors').append("Error: No PO Catalalogues Found.<br />").show();
+          return;
+        }
+        for (var i = 0; i<data.length; ++i){
+          $('#catalogue_list').append('<option id="' + data[i]['id'] + '">' + data[i]['description'] + "</option>");
+        }
+        $('#cat_name').text(data[catId-1]['description']);
+      });
+    };
+
+    var fillMsgTable = function(id, sort){
+      if ($('#errors').text() != "") return;
+      if (!sort) sort = "id";
+      $.messageService('getMessages',[id, sort],function(data){
+        if (data.length == 0){
+          $('#errors').append("Error: No Messages Found <br />").show();
+          return;
+        }
+        msgs = data;
+        var msgid, msgstr, fuzzy='<td class="fuzzy"> </td>', depr='<td class="depr"> </td>';
+        $('tbody tr').each( function(){$(this).remove();});
+        for (var i=0; i < data.length; ++i){
+          msgid = '<td class="msgid"><div><input type="text" name="id" id="id" value="' + data[i]['id'] + '" /><input type="text" name="idx" id="idx" value="' + i + '" />' + data[i]['msgid'] + '</div></td>';
+          msgstr = '<td class="msgstr"><div>' + data[i]['msgstr'] + '</div></td>';
+          $('#msg_table').append("<tr>" + msgid + msgstr + fuzzy + depr + "</tr>");
+          if (data[i]['fuzzy'] == 1){
+            $('#msg_table tr:last .fuzzy').addClass('f').text('F');
+          }
+          if (data[i]['obsolete'] == 1){
+            $('#msg_table tr:last .depr').addClass('d').text('D');
+          }
+        }
+        i = 0;
+        $('#msg_table tr').each(function(){$(this).toggleClass(i++ %2 == 0 ? "odd" : "")});
+        $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
+        //(currIdx == 0) ? currIdx = 1 : (currIdx);
+        fillEditBar();
+      });
+    };
+
+    var fillEditBar = function(){
+      if ($('#errors').text() != "") return;
+      var arr_idx = $('#msg_table tr:eq(' + (currIdx-1) + ') input:eq(1)').attr('value');
+      var msg = msgs[arr_idx];
+      $('#ref_data').html( (msg['reference'] != "") ? msg['reference'].replace( /\n/g, '<br />\n' ) : '-' );
+      $('#com_data').html( (msg['extracted_comments'] != "") ? msg['extracted_comments'].replace(/\n/g, '<br />\n') : '-' );
+      $('#update_data').html( (msg['updated_at'] != "") ? msg['updated_at'] : '-' );
+      $('#comments').attr( 'value', msg['comments'] );
+      $('#msgid').html( (msg['msgid'] != "" ) ? msg['msgid'].replace(/\n/g, '<br />\n') : "-" );
+      $('#msgstr').attr( 'value', msg['msgstr'] );
+      if ( msg['fuzzy'] == 1 ){
+        $('#fuzz').attr('checked',true);
+      } else{$('#fuzz').attr('checked',false);}
+      $('#edit_id').attr( 'value', msg['id'] );
+      $('#edit_idx').attr( 'value', arr_idx );
+    };
+    
+    var onBlur = function(prev){
+      // Check to see if the comments or translations have changed
+      var arr_idx = $('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value');
+      var msg = msgs[arr_idx];
+      if ( $('#id').attr('value') && $('#comments').attr('value') != msg['comments'] ){
+        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['comments'] = $('#comments').attr('value');
+        dirty = true;
+      }
+      if ( $('#id').attr('value') && $('#msgstr').attr('value') != msg['msgstr'] ){
+        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['msgstr'] = $('#msgstr').attr('value');
+        dirty = true;
+      }
+      if ( $('#id').attr('value') && $('#fuzz').attr('checked') != msg['fuzzy'] ){
+        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['fuzzy'] = !(msg['fuzzy']);
+        dirty = true;
+      }
+      if (dirty){
+        $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').attr('value'), $('#msgstr').attr('value'), $('#fuzz').attr('checked')], function(){
+          fillMsgTable(cat_id);
+        });
+        dirty = false;
+      }
+    };
+
+    var nextMsgBlock = function(prev){
+      onBlur(prev);
+      $('table').find('tbody tr').removeClass('selected');
+      $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
+      fillEditBar();
+    };
+
+    $(function() {
+      getCatalogues(cat_id);
+      fillMsgTable(cat_id);
+      $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
+      
+      $('#edit_bar .block h3 a.expand').click(function(){
+        $(this).parents('.block').find('.data').toggle();
+      }).parents('.block').find('.data').toggle();
+
+      $('#msg_table td').live("click",function() {
+        prev = currIdx;
+        currIdx = $('tr').index( $(this).parent('tr') ) - 1;
+        nextMsgBlock(prev);
+      });
+
+      $('#next').live("click", function(e){
+        e.preventDefault();
+        prev = currIdx;
+        currIdx = (currIdx % msgs.length) + 1;
+        var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
+        $('#scroll_container').scrollTop( top );
+        nextMsgBlock(prev);
+      });
+
+      $('#catalogue_list').blur( function(){
+        var index = $('option').index($('#catalogue_list option:selected'));
+        window.location.href = "edit.html?cat_id=" + (index + 1);
+      });
+
+      $('#Olink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "msgid");});
+      $('#Tlink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "msgstr");});
+      $('#Flink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "fuzzy");});
+      $('#Dlink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "obsolete");});
+      
+      initPanels();
+
+      $('#ref_head').live("mouseover", function(e){
+        var left = $('div.block').offset().left;
+        var top = $('div.block').offset().top + $('div.block').height();
+        $('#ref_data').css("left", left);
+        $('#ref_data').css("top", top);
+        $('#ref_data').show();
+      }).live("mouseout", function(){
+        $('#ref_data').slideUp(200);
+      });
+
+      $('#update_head, #update_data').live("mouseover", function(e){
+        var pos = $('#update_head').offset();
+        var left = pos.left + ( $('#update_head').outerWidth() / 2 ) - ( $('#update_data').outerWidth() / 2);
+        var top = $('div.block').offset().top + $('div.block').height();
+        $('#update_data').css("left", left);
+        $('#update_data').css("top", top);
+        $('#update_data').show();
+      }).live("mouseout", function(){
+        $('#update_data').slideUp(200);
+      });
+
+      $('#src_com_head').live("mouseover", function(e){
+        var left = $('#edit_bar').outerWidth() - $('#com_data').outerWidth()
+        var top = $('div.block').offset().top + $('div.block').height();
+        $('#com_data').css("left", left);
+        $('#com_data').css("top", top);
+        $('#com_data').show();
+      }).live("mouseout", function(){
+        $('#com_data').slideUp(200);
+      });
     });
     
-     
-    $(function() {
-      var i =0;
-      $('#msg_table tr').each(function(){$(this).addClass(i++ %2 == 0 ? "odd" : "")});
-      $('#edit_bar .block h3 a').click(function(){
-        $(this).parents('.block').find('.data').toggle();
-      });
-      $('#msg_table td').live("click",function() {
-        $(this).parents('table').find('tbody tr').removeClass('selected');
-        $(this).parent('tr').addClass('selected')
-      });
-      kk();
-    }); 
-  function kk() {
-    for(var i=0;i<3;i++)
-    $('#msg_table tr').after($('#msg_table tr').clone());
-    var i =0;
-    $('#msg_table tr').each(function(){$(this).toggleClass(i++ %2 == 0 ? "odd" : "")});
-  }
+    var initPanels = function(){
+      $(this).resize(function(e) {
+        var w = $(this).width();
+        var h = $(this).height();
+        var scroll_height = h - $('#scroll_container').offset().top - ( $('#foot').outerHeight() * 2);
+        var l = $('#message_container').offset().left;
+        $('#message_container').css({width:w-l});
+        $('#msg_table,#msg_table_head').css({width:w-l-20});
+        $('#scroll_container').css('height',scroll_height);
+      }).resize();
+    }
+
   </script>
 </head>
+
 <body><div id="body_w">
-  <div id="errors">Errors Go Here</div>
+  <div id="errors"></div>
   <div id="messages">Messages Go Here</div>
   <div id="nav">
     <a href="#">Simple Po</a> 
     <a href="index.html" id="cat">Catalogue</a> 
     <div class="left">
       
-      <span id="cat_name">French Yabla</span>
+      <span id="cat_name"></span>
     </div>
     <div class="right">
       <div id="cat_select">
       Switch Catalogue:
-        <select id="cataloge_list">
-          <option value="1">Catalogue 1</option>
-          <option value="2">Catalogue 2</option>
-          <option value="3">Catalogue 3</option>
-          <option value="4">Catalogue 4</option>
-        </select>
+        <select id="catalogue_list"></select>
       </div>
     </div>
     <div style="clear:both"> </div>
@@ -81,49 +226,56 @@
   
   <div id="edit_bar">
     <div class="block">
-      <h3><a href="#" id="ref_head" class="expand">Reference</a></h3>
-      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+      <table id="edit_bar_table"><thead><tr>
+        <th id="ref_head">Reference</th>
+        <th id="update_head">Updated On</th>
+        <th id="src_com_head">Source Comments</th></tr></thead>
+      </table>
     </div>
     <div class="block">
-      <h3><a href="#" id="src_loc_head" class="expand">Source Location</a></h3>
-      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+      <h3><a href="#" id="trans_com_head" class="expand">Translation Comments</a></h3>
+      <textarea id="comments" class="data" spellcheck="false"></textarea>
     </div>
     <div class="block">
-      <h3><a href="#" id="src_com_head" class="expand">Source Comments</a></h3>
-      <div class="data"> alkdsfj lkjadsf lkjadlfkj l</div>
+      <h3><a href="#" id="orig_str_head">Original String (msgid)</a></h3>
+      <div id="msgid" class="data">-</div>
     </div>
-    <h3>Original String (msgid)</h3>
-    <textarea id="msgid"></textarea>
-    <h3>Translation (msgstr)</h3>
-    <textarea id="msgstr"></textarea>
-      
-    
+    <div class="block">
+      <h3><a href="#" id="orig_str_head">Translation (msgstr)</a></h3>
+      <textarea id="msgstr" class="data" spellcheck="false"></textarea>
+    </div>
+
+    <div class="block" id="cntrl_blk">
+      <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
+      <input type="submit" id="next" name="next" value="Next Message &raquo;" />
+      <input type="text" id="edit_id" name="edit_id" /><input type="text" id="edit_idx" name="edit_idx" />
+    </div>
   </div>
+
   <div id="message_container">
+<div class="pwrap">
     <table id="msg_table_head">
       <thead><tr>
-        <th class="msgid">Original String</th>
-        <th class="msgstr">Translation</th>
-        <th class="fuzzy"><a href="#" title="Fuzzy">F</a></th>
-        <th class="depr"><a href="#" title="Deprecated">D</a></th>
-      </tr></thead></table>
+        <th class="msgid"><a href="" title="Original String" id="Olink">Original String</a></th>
+        <th class="msgstr"><a href="" title="Translated String" id="Tlink">Translation</a></th>
+        <th class="fuzzy"><a href="" title="Fuzzy" id="Flink">F</a></th>
+        <th class="depr"><a href="" title="Deprecated" id="Dlink">D</a></th>
+      </tr></thead></table></div>
       <div id="scroll_container">
-      <table id="msg_table"><tbody>
-        <tr>
-          <td class="msgid"><div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </div></td>
-          <td class="msgstr"><div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </div></td>
-          <td class="fuzzy">F</td>
-          <td class="depr">D</td>
-        </tr>
+	
+      <table id="msg_table"><tbody></tbody>
+	
+      </table>
 
-      </tbody>
-    </table>
   </div>
+  
   </div>
   <div id="foot">
     This is the footer
-  </div>  
+  </div>
+
+  <div id="ref_data"></div>
+  <div id="update_data"></div>
+  <div id="com_data"></div>
 </div></body>
 </html>

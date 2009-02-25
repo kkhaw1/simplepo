@@ -1,0 +1,58 @@
+#cat_box {
+	margin-top:30px;
+	width:400px;
+	/*overflow-y:auto;*/
+	/*overflow-x:hidden;*/
+	padding:0 5px 0px 12px;
+}
+#cat_box h3{
+	margin:0;
+	font-size:10pt;
+}
+#cat_box .block {
+	margin-bottom:6px;
+}
+#cat_box .block .data {
+	margin:0;
+	background-color:#FFF;
+	border-left:1px solid #CCC;
+	border-bottom:1px solid #CCC;
+	border-right:1px solid #CCC;
+	padding:5px 8px 9px;
+}
+#cat_box .block .data a {
+	padding: 5px 5px;
+	cursor: pointer;
+	color:#000;
+	text-decoration:none;
+	font-weight:none;
+	display:block;
+}
+#cat_box .block .data a:hover {
+	color:#888;
+}
+#cat_box .block h3 {
+	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
+	border:1px solid #CCC;
+	font-size:12pt;
+	margin:0;
+	padding:5px 5px;
+	color:#FFF;
+	-moz-border-radius-topleft:6px;
+	-moz-border-radius-topright:6px;
+	-webkit-border-radius-topleft:6px;
+	-webkit-border-radius-topright:6px;
+	border-radius-topleft:6px;
+	border-radius-topright:6px;
+}
+#cat_box .block h3 a {
+	color:#555;
+	text-decoration:none;
+	font-weight:none;
+	cursor:default;
+}
+#cat_box .block h3 a:hover {
+	color:#222;
+}
+
+

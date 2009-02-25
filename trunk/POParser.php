@@ -27,7 +27,7 @@ class DBHandler implements ParseHandler{
     if ( !$msg["extracted-comments"] ) $msg["extracted-comments"] = "";
     if ( !$msg["reference"] ) $msg["reference"] = "";
     if ( !$msg["flag"] ) $msg["flag"] = "";
-    if ( !$msg["obsolete-message"] ) $msg["obsolete-message"] = "";
+    if ( $msg["obsolete"] == NULL ) $msg["obsolete"] = false;
     if ( !$msg["previous-untranslated-string"] ) $msg["previous-untranslated-string"] = "";
     if ( $msg["fuzzy"] == NULL ) $msg["fuzzy"] = false;
 
@@ -35,7 +35,7 @@ class DBHandler implements ParseHandler{
                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $q->sql("Insert into simplepo_messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
-                        $msg["reference"], $msg["flag"], $msg["obsolete-message"], $msg["previous-untranslated-string"], $msg["fuzzy"])->execute();
+                        $msg["reference"], $msg["flag"], $msg["obsolete"], $msg["previous-untranslated-string"], $msg["fuzzy"])->execute();
   }
 
   public function read(){
@@ -96,7 +96,18 @@ class POParser{
       $retVal["value"] = $line;
     } else if( substr($line, 0, 3) == "#~ "){
       $retVal["type"] = "obsolete-message";
-      $retVal["value"] = substr($line, 3, -1);
+      if ( substr($line, 3, 6) == "msgid " ){
+        $retVal["subtype"] = "msgid";
+        $retVal["value"] = substr($line, 9, -1);
+      } else if( substr($line, 3, 7) == "msgstr " ){
+        $retVal["subtype"] = "msgstr";
+       $retVal["value"] = substr($line, 10, -1);
+      } else if( substr($line, 3, 1) == "\""){
+        $retVal["subtype"] = "string";
+        $retVal["value"] = substr($line, 3, -1);
+      } else{
+        throw new Exception("Cannot parse line $this->lineNumber: $line");
+      }
     } else if( substr($line, 0, 1) == "#"){
       $retVal["type"] = "translator-comments";
       $retVal["value"] = "";
@@ -127,22 +138,25 @@ class POParser{
     $context = "";
 
     foreach ( $entry_lines as $line ){
-      if($line['type'] == "string"){
+      if ($line['type'] == "obsolete-message"){
+        $entry["obsolete"][0] = true;
+      }
+      if($line['type'] == "string" || $line['subtype'] == "string"){
         if($context == "msgid" || $context == "msgstr"){
           $entry[ $context ][] = $this->decodeStringFormat( $line['value'] );
         } else{
           throw new Exception("String in invalid position: " . $line["value"]);
         }
       } else {
-        $context = $line["type"];
-        $entry[ $line["type"] ] [] = ( $context == "msgid" || $context == "msgstr" ) ? $this->decodeStringFormat( $line["value"] ) : $line["value"];
+        $context = ($line['subtype']) ? $line['subtype'] : $line["type"];
+        $entry[ $context ] [] = ( $context == "msgid" || $context == "msgstr" ) ? $this->decodeStringFormat( $line["value"] ) : $line["value"];
       }
     }
 
     foreach($entry as $k=>&$v){
       if( in_array($k,array('msgid',"msgstr")) ){
         $v  = implode('',$v);
-      } else {
+      } else{
         $v = implode("\n",$v);
       }
     }
@@ -173,25 +187,27 @@ class POParser{
     }
   }
 
-  public function encodeStringFormat( $str ){
+  public function encodeStringFormat( $str, $obs ){
+    if ($obs) $obs = "#~ ";
+    else $obs = "";
     $width = 75;
     $retVal = "";
     $str = explode("\n", $str);
     if ( count($str) == 1 ) {
       if ( strlen( $str[0] ) > $width ){
-        $retVal = "\"\"\n\"" . wordwrap($str[0], $width, "\"\n\"") . "\"\n";
+        $retVal = "\"\"\n$obs\"" . wordwrap($str[0], $width, "\"\n$obs\"") . "\"\n";
       } else{
         $retVal = "\"" . $str[0] . "\"\n";
       }
       return $retVal;
     }
 
-    $retVal .= "\"\"\n";
+    $retVal .= "\"\"\n$obs";
     for ($i = 0; $i < count($str) && $str[$i]; $i++ ){
       if (strlen($str[$i]) > $width) {
-        $retVal .= "\"" . wordwrap($str[$i], $width, "\"\n\"") . "\\n\"\n";
+        $retVal .= "$obs\"" . wordwrap($str[$i], $width, "\"\n$obs\"") . "\\n\"\n";
       }else{
-        $retVal .= "\"" . $str[$i] . "\\n\"\n";
+        $retVal .= "$obs\"" . $str[$i] . "\\n\"\n";
       }
     }
     return $retVal;
@@ -202,7 +218,7 @@ class POParser{
     $prefix = array("comments"=>"# ", "extracted_comments"=>"#. ", "reference"=>"#: ", "flag"=>"#, ", "previous_untranslated_string"=>"#| msgid ", "obsolete"=>"#~ ");
     $msg = "";
     foreach ( $entry as $k=>&$v ){
-      if ( in_array( $k, array("comments", "extracted_comments", "reference", "obsolete") ) && $entry[$k] ){
+      if ( in_array( $k, array("comments", "extracted_comments", "reference") ) && $entry[$k] ){
         $msg .= $prefix[$k] . str_replace("\n", "\n" . $prefix[$k], $v) . "\n";
       }
       $msg .= ( $entry['fuzzy'] ) ? $prefix["flag"] . "fuzzy\n" : ""; $entry["fuzzy"] = 0;
@@ -211,8 +227,12 @@ class POParser{
       }
     }
 
-    $msg .= (!$entry['obsolete']) ? "msgid " . $this->encodeStringFormat($entry['msgid']) : "";
-    $msg .= (!$entry['obsolete']) ? "msgstr " . $this->encodeStringFormat($entry['msgstr']) : "";
+    //"msgid " . $this->encodeStringFormat($entry['msgid']) : "";
+    $msg .= ($entry['obsolete']) ? $prefix['obsolete'] : "";
+    $msg .= ($entry['msgid']) ? "msgid " . $this->encodeStringFormat($entry['msgid'], $entry['obsolete']) : "";
+    $msg .= ($entry['obsolete']) ? $prefix['obsolete'] : "";
+    $msg .= ($entry['msgstr']) ? "msgstr " . $this->encodeStringFormat($entry['msgstr'], $entry['obsolete']) : "";
+
     $msg .= "\n";
     fwrite($this->fileHandle, $msg);
   }

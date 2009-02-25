@@ -26,7 +26,7 @@ function main($argc, $argv){
     $this->fileHandle = fopen( $this->infile, 'r');
     $this->POParser = new POParser( $this->fileHandle, $this->pHandler);
     $this->POParser->parse();
-    echo "$this->infile successfully parsed\n";
+    echo "\t$this->infile successfully parsed\n\n";
     return;
   }
   if ( $this->outfile ){
@@ -34,7 +34,7 @@ function main($argc, $argv){
     $this->fileHandle = fopen( $this->outfile, 'w');
     $this->POParser = new POParser( $this->fileHandle, $this->pHandler);
     $this->POParser->create();
-    echo "$this->outfile successfully written\n";
+    echo "\t$this->outfile successfully written\n\n";
     return;
   }
   $this->usage();
