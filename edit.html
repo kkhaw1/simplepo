@@ -11,6 +11,7 @@
     var msgs, dirty=false, currIdx = 1, cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
     cat_id = cat_id.substring( cat_id.indexOf('cat_id') + 7 );
     cat_id = (cat_id == "") ? 1 : parseInt(cat_id);
+    var srtBy="id";
 
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
@@ -109,7 +110,7 @@
       }
       if (dirty){
         $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').attr('value'), $('#msgstr').attr('value'), $('#fuzz').attr('checked')], function(){
-          fillMsgTable(cat_id);
+          fillMsgTable(cat_id, srtBy);
         });
         dirty = false;
       }
@@ -128,7 +129,7 @@
       $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
       
       $('#edit_bar .block h3 a.expand').click(function(){
-        $(this).parents('.block').find('.data').toggle();
+        $(this).parents('.block').find('.data').toggle('fast');
       }).parents('.block').find('.data').toggle();
 
       $('#msg_table td').live("click",function() {
@@ -151,10 +152,26 @@
         window.location.href = "edit.html?cat_id=" + (index + 1);
       });
 
-      $('#Olink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "msgid");});
-      $('#Tlink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "msgstr");});
-      $('#Flink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "fuzzy");});
-      $('#Dlink').live("click", function(e){e.preventDefault();fillMsgTable(cat_id, "obsolete");});
+      $('#Olink').live("click", function(e){
+          e.preventDefault();
+          srtBy="msgid";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Tlink').live("click", function(e){
+          e.preventDefault();
+          srtBy="msgstr";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Flink').live("click", function(e){
+          e.preventDefault();
+          srtBy="fuzzy";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Dlink').live("click", function(e){
+          e.preventDefault();
+          srtBy="obsolete"
+          fillMsgTable(cat_id, srtBy);
+      });
       
       initPanels();
 
@@ -163,30 +180,30 @@
         var top = $('div.block').offset().top + $('div.block').height();
         $('#ref_data').css("left", left);
         $('#ref_data').css("top", top);
-        $('#ref_data').show();
+        $('#ref_data').fadeIn('fast');
       }).live("mouseout", function(){
-        $('#ref_data').slideUp(200);
+        $('#ref_data').fadeOut();
       });
 
-      $('#update_head, #update_data').live("mouseover", function(e){
+      $('#update_head').live("mouseover", function(e){
         var pos = $('#update_head').offset();
-        var left = pos.left + ( $('#update_head').outerWidth() / 2 ) - ( $('#update_data').outerWidth() / 2);
+        var left = $('div.block').offset().left;//pos.left + ( $('#update_head').outerWidth() / 2 ) - ( $('#update_data').outerWidth() / 2);
         var top = $('div.block').offset().top + $('div.block').height();
         $('#update_data').css("left", left);
         $('#update_data').css("top", top);
-        $('#update_data').show();
+        $('#update_data').fadeIn('fast');
       }).live("mouseout", function(){
-        $('#update_data').slideUp(200);
+        $('#update_data').fadeOut();
       });
 
       $('#src_com_head').live("mouseover", function(e){
-        var left = $('#edit_bar').outerWidth() - $('#com_data').outerWidth()
+        var left = $('div.block').offset().left;//$('#edit_bar').width() - $('#com_data').outerWidth() + $('div.block').offset().left;
         var top = $('div.block').offset().top + $('div.block').height();
         $('#com_data').css("left", left);
         $('#com_data').css("top", top);
-        $('#com_data').show();
+        $('#com_data').fadeIn('fast');
       }).live("mouseout", function(){
-        $('#com_data').slideUp(200);
+        $('#com_data').fadeOut();
       });
     });
     
@@ -212,18 +229,16 @@
     <a href="#">Simple Po</a> 
     <a href="index.html" id="cat">Catalogue</a> 
     <div class="left">
-      
       <span id="cat_name"></span>
     </div>
     <div class="right">
-      <div id="cat_select">
-      Switch Catalogue:
+      <div id="cat_select">Switch Catalogue:
         <select id="catalogue_list"></select>
       </div>
     </div>
     <div style="clear:both"> </div>
   </div>
-  
+
   <div id="edit_bar">
     <div class="block">
       <table id="edit_bar_table"><thead><tr>
@@ -244,7 +259,6 @@
       <h3><a href="#" id="orig_str_head">Translation (msgstr)</a></h3>
       <textarea id="msgstr" class="data" spellcheck="false"></textarea>
     </div>
-
     <div class="block" id="cntrl_blk">
       <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
       <input type="submit" id="next" name="next" value="Next Message &raquo;" />
@@ -253,25 +267,25 @@
   </div>
 
   <div id="message_container">
-<div class="pwrap">
     <table id="msg_table_head">
-      <thead><tr>
-        <th class="msgid"><a href="" title="Original String" id="Olink">Original String</a></th>
-        <th class="msgstr"><a href="" title="Translated String" id="Tlink">Translation</a></th>
-        <th class="fuzzy"><a href="" title="Fuzzy" id="Flink">F</a></th>
-        <th class="depr"><a href="" title="Deprecated" id="Dlink">D</a></th>
-      </tr></thead></table></div>
-      <div id="scroll_container">
-	
-      <table id="msg_table"><tbody></tbody>
-	
-      </table>
+        <thead>
+            <tr>
+                <th class="msgid"><a href="#" title="Original String" id="Olink">Original String</a></th>
+                <th class="msgstr"><a href="#" title="Translated String" id="Tlink">Translation</a></th>
+                <th class="fuzzy"><a href="#" title="Fuzzy" id="Flink">F</a></th>
+                <th class="depr"><a href="#" title="Deprecated" id="Dlink">D</a></th>
+            </tr>
+        </thead>
+    </table>
+    <div id="scroll_container">
+        <table id="msg_table">
+            <tbody></tbody>
+        </table>
+    </div>
+  </div>
 
-  </div>
-  
-  </div>
   <div id="foot">
-    This is the footer
+    <span>-Footer Text-</span>
   </div>
 
   <div id="ref_data"></div>

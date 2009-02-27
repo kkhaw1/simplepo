@@ -38,7 +38,6 @@ class JSON_RPC {
 
 class MessageService {
 	function __construct() {
-		
 	}
 	function getMessages($id, $sortBy) {
       $q = new Query();
