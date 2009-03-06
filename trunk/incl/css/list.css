@@ -1,8 +1,15 @@
+html, body {
+	margin:0;
+	padding:0;
+	font-family:arial,helvetica,sans-serif;
+	font-size:10pt;
+	background-color:#F8F4F4;
+    text-align:center;
+}
 #cat_box {
 	margin-top:30px;
 	width:400px;
-	/*overflow-y:auto;*/
-	/*overflow-x:hidden;*/
+    text-align:center;
 	padding:0 5px 0px 12px;
 }
 #cat_box h3{
@@ -46,13 +53,13 @@
 	border-radius-topright:6px;
 }
 #cat_box .block h3 a {
-	color:#555;
+	color:#333;
 	text-decoration:none;
-	font-weight:none;
 	cursor:default;
 }
 #cat_box .block h3 a:hover {
-	color:#222;
+	color:#000;
+    font-weight:bold;
 }
 
 
