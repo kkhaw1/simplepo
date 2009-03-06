@@ -8,10 +8,10 @@
   <script src="incl/js/jquery-1.3.1.min.js" type="text/javascript" charset="utf-8"></script>
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
-    var msgs, dirty=false, currIdx = 1, cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
+    var msgs, dirty=false, currIdx = 1, srtBy="id";
+    var  cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
     cat_id = cat_id.substring( cat_id.indexOf('cat_id') + 7 );
     cat_id = (cat_id == "") ? 1 : parseInt(cat_id);
-    var srtBy="id";
 
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
@@ -23,7 +23,7 @@
           )},
           function(obj) {
             if(obj.error) {
-              error_handler ? error_handler(obj.error) : $('#errors').text(obj.error.message);
+              error_handler ? error_handler(obj.error) : $('#errors span').text(obj.error.message + "  " + method).parent('#errors').show();
             } else {
               callback(obj.result);
             }
@@ -32,25 +32,135 @@
       );     
     };
 
-    var getCatalogues = function( catId ){
-      $.messageService('getCatalogues', [], function(data){
-        if (data.length == 0){
-          $('#errors').append("Error: No PO Catalalogues Found.<br />").show();
-          return;
-        }
-        for (var i = 0; i<data.length; ++i){
-          $('#catalogue_list').append('<option id="' + data[i]['id'] + '">' + data[i]['description'] + "</option>");
-        }
-        $('#cat_name').text(data[catId-1]['description']);
+    function Notifications(){
+            this.hideAll = function(){
+              this.hideError();
+              this.hideMessage();
+            };
+            this.showError = function(err){
+              $('#errors span').append(err + "<br />");
+              $('#errors').fadeIn();
+              $('#next').hide();
+            };
+            this.hideError = function(){
+              $('#errors').fadeOut();
+            };
+            this.showMessage = function(msg){
+              $('#messages span').append(msg + "<br />");
+              $('#messages').fadeIn();
+            };
+            this.hideMessage = function(){
+              $('#messages').fadeOut();
+            };
+            this.init = function(){ //Initialize all events and effects
+              // Hide btns
+              $('#errors #hideBtn').live('click', function(){$('#errors').fadeOut();});
+              $('#messages #hideBtn').live('click', function(){$('#messages').fadeOut(500);$('#messages span').text("");});
+            }
+    };
+    var NotificationObj = new Notifications();
+
+    var initEvents = function(){
+      // Add toggle effect
+      $('#edit_bar .block h3 a.expand').click(function(){
+        $(this).parents('.block').find('.data').toggle('fast');
+      }).parents('.block').find('.data').toggle();
+
+      // Add click event to message table entries
+      $('#msg_table td').live("click",function() {
+        prev = currIdx;
+        currIdx = $('tr').index( $(this).parent('tr') ) - 1;
+        nextMsgBlock(prev);
+      });
+
+      // Add click event to next button in the edit bar
+      $('#next').live("click", function(e){
+        e.preventDefault();
+        prev = currIdx;
+        currIdx = (currIdx % msgs.length) + 1;
+        var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
+        $('#scroll_container').scrollTop( top );
+        nextMsgBlock(prev);
+      });
+
+      // Jump to other Catalogues through drop down menu
+      $('#catalogue_list').blur( function(){
+        window.location.href = "edit.html?cat_id=" + ( $('#catalogue_list option:selected').attr('id') );
+      });
+
+      // Sort Table by the different headers
+      $('#Olink').live("click", function(e){
+          e.preventDefault();
+          NotificationObj.showMessage('Sorted According to Original String.');
+          srtBy="msgid";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Tlink').live("click", function(e){
+          e.preventDefault();
+          NotificationObj.showMessage('Sorted According to Translation String.');
+          srtBy="msgstr";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Flink').live("click", function(e){
+          e.preventDefault();
+          NotificationObj.showMessage('Sorted According to Fuzzy.');
+          srtBy="fuzzy";
+          fillMsgTable(cat_id, srtBy);
+      });
+      $('#Dlink').live("click", function(e){
+          e.preventDefault();
+          NotificationObj.showMessage('Sorted According to Deprecated.');
+          srtBy="obsolete"
+          fillMsgTable(cat_id, srtBy);
+      });
+
+      // Initialize table size
+      initPanels();
+      // Add rollover effect to Side Bar
+      var left = $('div.block').offset().left;
+      var top = $('div.block').offset().top + $('div.block').height();
+      $('#ref_head').live("mouseover", function(){
+        $('#ref_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#ref_data').fadeOut();
+      });
+      $('#update_head').live("mouseover", function(){
+        $('#update_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#update_data').fadeOut();
+      });
+      $('#src_com_head').live("mouseover", function(){
+        $('#com_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#com_data').fadeOut();
       });
     };
 
+    // Get the stored catalogues
+    var getCatalogues = function( catId ){
+      $.messageService('getCatalogues', [], function(data){
+        if (data.length == 0){
+          NotificationObj.showError("No PO Catalalogues Found.");
+          return;
+        }
+        for (var i = 0; i<data.length; ++i){
+            $("<option />").attr('id',data[i]['id']).text(data[i]['description']).appendTo($('#catalogue_list'));
+        }
+        if (catId > 0 && catId < data.length + 1){
+          $('#cat_name').text(data[catId-1]['description']);
+        } else {
+          NotificationObj.showError("Catalogue [" + catId + "] Not Found.");
+        }
+      });
+    };
+
+    // Fill the table with all of the messages
     var fillMsgTable = function(id, sort){
-      if ($('#errors').text() != "") return;
+      if ($('#errors span').text() != "") return;
       if (!sort) sort = "id";
       $.messageService('getMessages',[id, sort],function(data){
         if (data.length == 0){
-          $('#errors').append("Error: No Messages Found <br />").show();
+          NotificationObj.showError("No Messages Found");
           return;
         }
         msgs = data;
@@ -70,13 +180,12 @@
         i = 0;
         $('#msg_table tr').each(function(){$(this).toggleClass(i++ %2 == 0 ? "odd" : "")});
         $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
-        //(currIdx == 0) ? currIdx = 1 : (currIdx);
         fillEditBar();
       });
     };
 
+    // Fill the Edit Bar with the selected message
     var fillEditBar = function(){
-      if ($('#errors').text() != "") return;
       var arr_idx = $('#msg_table tr:eq(' + (currIdx-1) + ') input:eq(1)').attr('value');
       var msg = msgs[arr_idx];
       $('#ref_data').html( (msg['reference'] != "") ? msg['reference'].replace( /\n/g, '<br />\n' ) : '-' );
@@ -85,15 +194,13 @@
       $('#comments').attr( 'value', msg['comments'] );
       $('#msgid').html( (msg['msgid'] != "" ) ? msg['msgid'].replace(/\n/g, '<br />\n') : "-" );
       $('#msgstr').attr( 'value', msg['msgstr'] );
-      if ( msg['fuzzy'] == 1 ){
-        $('#fuzz').attr('checked',true);
-      } else{$('#fuzz').attr('checked',false);}
+      ( msg['fuzzy'] == 1 ) ? $('#fuzz').attr('checked',true) : $('#fuzz').attr('checked',false);
       $('#edit_id').attr( 'value', msg['id'] );
       $('#edit_idx').attr( 'value', arr_idx );
     };
     
     var onBlur = function(prev){
-      // Check to see if the comments or translations have changed
+      // Check to see if the comments or translations have changed for the previous message
       var arr_idx = $('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value');
       var msg = msgs[arr_idx];
       if ( $('#id').attr('value') && $('#comments').attr('value') != msg['comments'] ){
@@ -109,8 +216,10 @@
         dirty = true;
       }
       if (dirty){
+        NotificationObj.showMessage("Attempting to update message...");
         $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').attr('value'), $('#msgstr').attr('value'), $('#fuzz').attr('checked')], function(){
           fillMsgTable(cat_id, srtBy);
+          NotificationObj.showMessage("Message was updated successfully.");
         });
         dirty = false;
       }
@@ -123,92 +232,17 @@
       fillEditBar();
     };
 
-    $(function() {
+    $(function() {      
       getCatalogues(cat_id);
       fillMsgTable(cat_id);
       $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
-      
-      $('#edit_bar .block h3 a.expand').click(function(){
-        $(this).parents('.block').find('.data').toggle('fast');
-      }).parents('.block').find('.data').toggle();
 
-      $('#msg_table td').live("click",function() {
-        prev = currIdx;
-        currIdx = $('tr').index( $(this).parent('tr') ) - 1;
-        nextMsgBlock(prev);
-      });
-
-      $('#next').live("click", function(e){
-        e.preventDefault();
-        prev = currIdx;
-        currIdx = (currIdx % msgs.length) + 1;
-        var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
-        $('#scroll_container').scrollTop( top );
-        nextMsgBlock(prev);
-      });
-
-      $('#catalogue_list').blur( function(){
-        var index = $('option').index($('#catalogue_list option:selected'));
-        window.location.href = "edit.html?cat_id=" + (index + 1);
-      });
-
-      $('#Olink').live("click", function(e){
-          e.preventDefault();
-          srtBy="msgid";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Tlink').live("click", function(e){
-          e.preventDefault();
-          srtBy="msgstr";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Flink').live("click", function(e){
-          e.preventDefault();
-          srtBy="fuzzy";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Dlink').live("click", function(e){
-          e.preventDefault();
-          srtBy="obsolete"
-          fillMsgTable(cat_id, srtBy);
-      });
-      
-      initPanels();
-
-      $('#ref_head').live("mouseover", function(e){
-        var left = $('div.block').offset().left;
-        var top = $('div.block').offset().top + $('div.block').height();
-        $('#ref_data').css("left", left);
-        $('#ref_data').css("top", top);
-        $('#ref_data').fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#ref_data').fadeOut();
-      });
-
-      $('#update_head').live("mouseover", function(e){
-        var pos = $('#update_head').offset();
-        var left = $('div.block').offset().left;//pos.left + ( $('#update_head').outerWidth() / 2 ) - ( $('#update_data').outerWidth() / 2);
-        var top = $('div.block').offset().top + $('div.block').height();
-        $('#update_data').css("left", left);
-        $('#update_data').css("top", top);
-        $('#update_data').fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#update_data').fadeOut();
-      });
-
-      $('#src_com_head').live("mouseover", function(e){
-        var left = $('div.block').offset().left;//$('#edit_bar').width() - $('#com_data').outerWidth() + $('div.block').offset().left;
-        var top = $('div.block').offset().top + $('div.block').height();
-        $('#com_data').css("left", left);
-        $('#com_data').css("top", top);
-        $('#com_data').fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#com_data').fadeOut();
-      });
+      NotificationObj.init();
+      initEvents();
     });
-    
+   
     var initPanels = function(){
-      $(this).resize(function(e) {
+      $(this).resize(function() {
         var w = $(this).width();
         var h = $(this).height();
         var scroll_height = h - $('#scroll_container').offset().top - ( $('#foot').outerHeight() * 2);
@@ -223,8 +257,8 @@
 </head>
 
 <body><div id="body_w">
-  <div id="errors"></div>
-  <div id="messages">Messages Go Here</div>
+  <div id="errors">Error: <span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
+  <div id="messages"><span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="nav">
     <a href="#">Simple Po</a> 
     <a href="index.html" id="cat">Catalogue</a> 

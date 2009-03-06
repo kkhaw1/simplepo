@@ -13,20 +13,32 @@ body,html {
 	color:#FFF;
 	font-weight:bold;
 	background-color:#A00;
-	margin:3px 0 0 200px;
-	width:70%;
+	margin:3px auto 0 auto;
+	left: 0;
+	right:0;
+	width:300px;
 	padding:4px 10px;
 	z-index:1;
 	display:none;
+	text-align:center;
+	-moz-border-radius:6px;
+	-webkit-border-radius:6px;
+	border-radius:6px;
 }
 #messages {
 	position:fixed;
 	background-color:#FFF1A8;
-	margin:30px 0 0 200px;
-	width:70%;
+	margin:3px auto 0 auto;
+	left: 0;
+	right:0;
+	width:500px;
 	padding:4px 10px;
 	z-index:1;
 	display:none;
+	text-align:center;
+	-moz-border-radius:6px;
+	-webkit-border-radius:6px;
+	border-radius:6px;
 }
 #nav {
 	margin:0;
