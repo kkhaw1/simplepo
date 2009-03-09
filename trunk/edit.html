@@ -6,9 +6,10 @@
   <link rel="stylesheet" href="incl/css/master.css" type="text/css" media="screen" title="no title" charset="utf-8">
   <link rel="stylesheet" href="incl/css/edit.css" type="text/css" media="screen" title="no title" charset="utf-8">
   <script src="incl/js/jquery-1.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="incl/js/jquery.tablesorter.js" type="text/javascript" charset="utf-8"></script>
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
-    var msgs, dirty=false, currIdx = 1, srtBy="id";
+    var msgs, dirty=false, currIdx = 1, srtBy="id", colHeader=new Array("msgid", "msgstr", "fuzzy", "deprecated");
     var  cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
     cat_id = cat_id.substring( cat_id.indexOf('cat_id') + 7 );
     cat_id = (cat_id == "") ? 1 : parseInt(cat_id);
@@ -51,11 +52,15 @@
             };
             this.hideMessage = function(){
               $('#messages').fadeOut();
+              $('#messages span').text("");
             };
-            this.init = function(){ //Initialize all events and effects
+            this.init = function(){
               // Hide btns
-              $('#errors #hideBtn').live('click', function(){$('#errors').fadeOut();});
-              $('#messages #hideBtn').live('click', function(){$('#messages').fadeOut(500);$('#messages span').text("");});
+              $('#errors #hideBtn').live('click', function(){Notifications.hideError();});
+              $('#messages #hideBtn').live('click', function(){
+                $('#messages').fadeOut();
+                $('#messages span').text("");
+              });
             }
     };
     var NotificationObj = new Notifications();
@@ -89,30 +94,7 @@
       });
 
       // Sort Table by the different headers
-      $('#Olink').live("click", function(e){
-          e.preventDefault();
-          NotificationObj.showMessage('Sorted According to Original String.');
-          srtBy="msgid";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Tlink').live("click", function(e){
-          e.preventDefault();
-          NotificationObj.showMessage('Sorted According to Translation String.');
-          srtBy="msgstr";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Flink').live("click", function(e){
-          e.preventDefault();
-          NotificationObj.showMessage('Sorted According to Fuzzy.');
-          srtBy="fuzzy";
-          fillMsgTable(cat_id, srtBy);
-      });
-      $('#Dlink').live("click", function(e){
-          e.preventDefault();
-          NotificationObj.showMessage('Sorted According to Deprecated.');
-          srtBy="obsolete"
-          fillMsgTable(cat_id, srtBy);
-      });
+      sortController.init();
 
       // Initialize table size
       initPanels();
@@ -134,6 +116,35 @@
       }).live("mouseout", function(){
         $('#com_data').fadeOut();
       });
+    };
+    
+    var sortController = {
+      init: function() {
+        $('#msg_table_head thead th').click(function() {
+          var column = $(this)
+                                    .closest('thead')
+                                    .find('th')
+                                    .index(this);
+           srtBy = colHeader[column];
+           var direction = !!$(this).hasClass('sort-desc') ||
+            !$(this).hasClass('sort-asc');
+            $(this).siblings().andSelf().removeClass('sort-asc').removeClass('sort-desc');
+            $(this).addClass(direction ? 'sort-asc' : 'sort-desc');
+            direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'F' ? !direction : direction;
+            direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'D' ? !direction : direction;
+            $('#msg_table').tsort(column,direction);
+            nextMsgBlock();
+            sortController.color();
+        });
+      },
+      color: function(){
+        i = 0;
+        $('table').find('tbody tr').removeClass('odd');
+        $('#msg_table tr').each(function(){ $(this).toggleClass(i++ %2 == 0 ? "odd" : ""); });
+        $('table').find('tbody tr').removeClass('selected');
+        currIdx=1;
+        $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
+      }
     };
 
     // Get the stored catalogues
@@ -216,17 +227,15 @@
         dirty = true;
       }
       if (dirty){
-        NotificationObj.showMessage("Attempting to update message...");
         $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').attr('value'), $('#msgstr').attr('value'), $('#fuzz').attr('checked')], function(){
           fillMsgTable(cat_id, srtBy);
-          NotificationObj.showMessage("Message was updated successfully.");
         });
         dirty = false;
       }
     };
 
     var nextMsgBlock = function(prev){
-      onBlur(prev);
+      if (prev) onBlur(prev);
       $('table').find('tbody tr').removeClass('selected');
       $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
       fillEditBar();
@@ -304,10 +313,10 @@
     <table id="msg_table_head">
         <thead>
             <tr>
-                <th class="msgid"><a href="#" title="Original String" id="Olink">Original String</a></th>
-                <th class="msgstr"><a href="#" title="Translated String" id="Tlink">Translation</a></th>
-                <th class="fuzzy"><a href="#" title="Fuzzy" id="Flink">F</a></th>
-                <th class="depr"><a href="#" title="Deprecated" id="Dlink">D</a></th>
+                <th class="msgid"><a href="#" title="Original String" id="Olink">Original String</a><img src="incl/img/blank.gif"/></th>
+                <th class="msgstr"><a href="#" title="Translated String" id="Tlink">Translation</a><img src="incl/img/blank.gif"/></th>
+                <th class="fuzzy"><a href="#" title="Fuzzy" id="Flink">F</a><img src="incl/img/blank.gif"/></th>
+                <th class="depr"><a href="#" title="Deprecated" id="Dlink">D</a><img src="incl/img/blank.gif"/></th>
             </tr>
         </thead>
     </table>
