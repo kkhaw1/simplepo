@@ -213,6 +213,17 @@ body,html {
     text-decoration:none;
     color:#111;
 }
+#msg_table_head th img {
+	border:none;
+	width:10px;
+	height:5px;
+}
+#msg_table_head th.sort-asc img {
+	background:#900 url('../img/arrow.gif') no-repeat scroll 0 0;
+}
+#msg_table_head th.sort-desc img {
+	background:#009 url('../img/arrow.gif') no-repeat scroll 0 -5px;
+}
 #scroll_container {
 	height:500px;
 	overflow-y:auto;
