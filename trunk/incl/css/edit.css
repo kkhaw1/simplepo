@@ -215,11 +215,19 @@ body,html {
 }
 #msg_table_head th img {
 	border:none;
+	float:left;
+	margin-left:5px;
 	width:10px;
 	height:5px;
 }
+#msg_table_head th.sort-asc {
+	background:#DDF;
+}
 #msg_table_head th.sort-asc img {
 	background:#900 url('../img/arrow.gif') no-repeat scroll 0 0;
+}
+#msg_table_head th.sort-desc {
+	background:#DDD;
 }
 #msg_table_head th.sort-desc img {
 	background:#009 url('../img/arrow.gif') no-repeat scroll 0 -5px;
@@ -241,6 +249,11 @@ body,html {
 #msg_table td.msgid,#msg_table_head th.msgid {
 	width:45%;
 	text-align:left;
+}
+#msg_table tr.empty td {
+	background-color:#BBDDFF;
+	border-top:1px solid #DD3344;
+	border-bottom:1px solid #DD3344;
 }
 #msg_table tr.odd td {
 	background-color:#e4f1ff;

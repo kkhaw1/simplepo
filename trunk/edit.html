@@ -76,6 +76,7 @@
         prev = currIdx;
         currIdx = $('tr').index( $(this).parent('tr') ) - 1;
         nextMsgBlock(prev);
+        document.getElementById('Olink').focus();
       });
 
       // Add click event to next button in the edit bar
@@ -86,6 +87,29 @@
         var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
         $('#scroll_container').scrollTop( top );
         nextMsgBlock(prev);
+        document.getElementById('Olink').focus();
+      });
+
+      // Add keyboard controls
+     $('#Olink').keydown( function(e){
+        switch(e.which){
+          case 73:
+          case 38:
+            prev = currIdx;
+            currIdx = (currIdx == 1) ? msgs.length : currIdx-1;
+            var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
+            $('#scroll_container').scrollTop( top );
+            nextMsgBlock(prev);
+            break;
+          case 75:
+          case 40:
+            prev = currIdx;
+            currIdx = (currIdx % msgs.length) + 1;
+            var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
+            $('#scroll_container').scrollTop( top );
+            nextMsgBlock(prev);
+            break;
+        }
       });
 
       // Jump to other Catalogues through drop down menu
@@ -140,7 +164,7 @@
       color: function(){
         i = 0;
         $('table').find('tbody tr').removeClass('odd');
-        $('#msg_table tr').each(function(){ $(this).toggleClass(i++ %2 == 0 ? "odd" : ""); });
+        $('#msg_table tr').each(function(){ $(this).toggleClass((i++ %2 == 0 && !$(this).hasClass('empty')) ? "odd" : ""); });
         $('table').find('tbody tr').removeClass('selected');
         currIdx=1;
         $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
@@ -181,6 +205,9 @@
           msgid = '<td class="msgid"><div><input type="text" name="id" id="id" value="' + data[i]['id'] + '" /><input type="text" name="idx" id="idx" value="' + i + '" />' + data[i]['msgid'] + '</div></td>';
           msgstr = '<td class="msgstr"><div>' + data[i]['msgstr'] + '</div></td>';
           $('#msg_table').append("<tr>" + msgid + msgstr + fuzzy + depr + "</tr>");
+          if (data[i]['msgstr'] == "") {
+            $('#msg_table tr:last').addClass('empty');
+          }
           if (data[i]['fuzzy'] == 1){
             $('#msg_table tr:last .fuzzy').addClass('f').text('F');
           }
@@ -189,7 +216,7 @@
           }
         }
         i = 0;
-        $('#msg_table tr').each(function(){$(this).toggleClass(i++ %2 == 0 ? "odd" : "")});
+        $('#msg_table tr').each(function(){$(this).toggleClass((i++ %2 == 0 && !$(this).hasClass('empty')) ? "odd" : "")});
         $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
         fillEditBar();
       });
@@ -241,7 +268,7 @@
       fillEditBar();
     };
 
-    $(function() {      
+    $(function() {
       getCatalogues(cat_id);
       fillMsgTable(cat_id);
       $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
@@ -265,7 +292,7 @@
   </script>
 </head>
 
-<body><div id="body_w">
+<body onload="document.getElementById('Olink').focus()"><div id="body_w">
   <div id="errors">Error: <span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="messages"><span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="nav">
