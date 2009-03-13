@@ -22,6 +22,10 @@ msgstr ""
 msgid "Password"
 msgstr "Mot de passe:"
 
+#: standard input:3299
+msgid "Needs Translation"
+msgstr ""
+
 #: standard input:119 input:1442 input:3176
 msgid "Confirm Password"
 msgstr "Confirmation du Mot de passe:"
@@ -195,6 +199,10 @@ msgstr "Démo. Gratuites"
 #: standard input:3299
 msgid "click to watch"
 msgstr "Cliquer pour regarder"
+
+#: standard input:3299
+msgid "Test Empty"
+msgstr ""
 
 #: standard input:3323
 #, fuzzy

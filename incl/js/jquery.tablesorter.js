@@ -1,12 +1,13 @@
 /**
- * Know issues:
+ * Known issues:
  * 1) Does not work with colspans
- * 2) Issue when th's withing table body.  Unpredictable behavior.
+ * 2) Issue when th's within table body.  Unpredictable behavior.
  */
  (function($) {
 
    var comparators = {
      STRING: function(a,b) {
+       // Separates and sorts by case
        return $(a).text() == $(b).text() ? 0 :
                  $(a).text() > $(b).text() ? 1 : -1;
      },
