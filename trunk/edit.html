@@ -90,10 +90,9 @@
         document.getElementById('Olink').focus();
       });
 
-      // Add keyboard controls: 'i' or up arrow & 'j' or down arrow
+      // Add keyboard controls: up arrow & down arrow
      $('#Olink').keydown( function(e){
         switch(e.which){
-          case 73:
           case 38:
             prev = currIdx;
             currIdx = (currIdx == 1) ? msgs.length : currIdx-1;
@@ -101,7 +100,6 @@
             $('#scroll_container').scrollTop( top );
             nextMsgBlock(prev);
             break;
-          case 75:
           case 40:
             prev = currIdx;
             currIdx = (currIdx % msgs.length) + 1;
