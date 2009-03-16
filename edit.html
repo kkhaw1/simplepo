@@ -9,11 +9,9 @@
   <script src="incl/js/jquery.tablesorter.js" type="text/javascript" charset="utf-8"></script>
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
-    var msgs, dirty=false, currIdx = 1, srtBy="id", colHeader=new Array("msgid", "msgstr", "fuzzy", "deprecated");
-    var  cat_id = window.location.href.substring( window.location.href.indexOf("edit.html?") + 10);
-    cat_id = cat_id.substring( cat_id.indexOf('cat_id') + 7 );
-    cat_id = (cat_id == "") ? 1 : parseInt(cat_id);
-
+  
+  
+    
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
           {request:JSON.stringify(
@@ -61,84 +59,164 @@
                 $('#messages').fadeOut();
                 $('#messages span').text("");
               });
-            }
+            };
     };
     var NotificationObj = new Notifications();
 
-    var initEvents = function(){
-      // Add toggle effect
-      $('#edit_bar .block h3 a.expand').click(function(){
-        $(this).parents('.block').find('.data').toggle('fast');
-      }).parents('.block').find('.data').toggle();
+    var appController = (function() {
+      
+      var msgs;
+      var cat_id = parseInt(window.location.href.match(/cat_id=(\d+)/)[1]);
+      
+      
+      var initEvents = function() {
+        // Add click event to message table entries
+        $('#msg_table td').live("click",function() {
+          selectMessage($(this).parent('tr').prevAll().length );
+          document.getElementById('Olink').focus();
+        });
 
-      // Add click event to message table entries
-      $('#msg_table td').live("click",function() {
-        prev = currIdx;
-        currIdx = $('tr').index( $(this).parent('tr') ) - 1;
-        nextMsgBlock(prev);
-        document.getElementById('Olink').focus();
-      });
+        // Add click event to next button in the edit bar
+        $('#next').live("click", function(e){
+          e.preventDefault();
+          moveBy(1)
+          document.getElementById('Olink').focus();
+        });
+        
+        $('#Olink').keydown( function(e){
+            switch(e.which){
+              case 38:
+                moveBy(-1);
+                break;
+              case 40:
+                moveBy(1);
+                break;
+            }
+          });
+          
+         
+      }
+      var moveBy = function(num) {
+        var moveTo = getCurrentMessage() + num % msgs.length;
+        selectMessage(moveTo);
+      }
+      var selectMessage = function (index) {
+        beforeBlur();
+        $('#msg_table').find('tbody tr').removeClass('selected');
+        $('#msg_table').find('tbody tr:eq(' +(index)+ ')').addClass('selected');
+        fillEditBar(index);
+        setScroll();
+      }
+      var getCurrentMessage = function() {
+        return $('#msg_table tr.selected').prevAll().length;
+      }
+      
+      var beforeBlur = function(){
+        
+        var $row = $('#msg_table tr:eq(' + getCurrentMessage() + ')');    
+       
+        var msg = msgs[$row.data('index')];
+        var dirty = $('#msgstr').val() != msg.msgstr || $('#comments').val() != msg.comments;
+        
+        if (dirty){
+          msg.msgstr = $('#msgstr').val();
+          msg.fuzzy = $('#fuzz').is(':checked');
+          msg.comment = $('#comments').val();
+          $row.trigger('sync');
+          $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
 
-      // Add click event to next button in the edit bar
-      $('#next').live("click", function(e){
-        e.preventDefault();
-        prev = currIdx;
-        currIdx = (currIdx % msgs.length) + 1;
-        var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
-        $('#scroll_container').scrollTop( top );
-        nextMsgBlock(prev);
-        document.getElementById('Olink').focus();
-      });
-
-      // Add keyboard controls: up arrow & down arrow
-     $('#Olink').keydown( function(e){
-        switch(e.which){
-          case 38:
-            prev = currIdx;
-            currIdx = (currIdx == 1) ? msgs.length : currIdx-1;
-            var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
-            $('#scroll_container').scrollTop( top );
-            nextMsgBlock(prev);
-            break;
-          case 40:
-            prev = currIdx;
-            currIdx = (currIdx % msgs.length) + 1;
-            var top = ( $('#msg_table tr').height() * currIdx) - ($('#scroll_container').height() - ( $('#scroll_container').height() % $('#msg_table tr').height() )) / 2;
-            $('#scroll_container').scrollTop( top );
-            nextMsgBlock(prev);
-            break;
+            
+          });
+          dirty = false;
         }
-      });
+        
+      };
+      
+      var setScroll = function() {
+        var ot = $('#msg_table tr.selected').position().top;
+        var sh = $('#scroll_container').height();
+        // $('#scroll_container').scrollTop( sh/2-ot );
+        
+      }
+      
+      // Fill the table with all of the messages
+      var fillMsgTable = function(id){
+        if ($('#errors span').text() != "") return;
+      
+        $.messageService('getMessages',[id, "id"],function(data){
+          msgs = data;
+          if (msgs.length == 0){
+            NotificationObj.showError("No Messages Found");
+            return;
+          }
+          var msgid, msgstr, fuzzy='<td> </td>', depr='<td > </td>';
+          $('tbody tr').remove();
+          
+          var sync = function () {
+            var $row2 = $(this);
+            console.log(this);
+            var msg2 = msgs[$row2.data("index")];
+            $row2.find('td.msgid div').text(msg2.msgid).end()
+                .find('td.msgstr div').text(msg2.msgstr);
+            msg2.msgstr == "" && $row2.addClass('empty');
+            msg2.fuzzy && $row2.addClass('f').find('.fuzzy').text('F');
+            msg2.obsolete && $row2.addClass('d').find('.depr').text('D');
+          }
+          
+          for (var i=0; i < msgs.length; ++i) {
+            var msg = msgs[i];
+            var $row = $('<tr><td class="msgid"><div/></td><td class="msgstr"><div/></td><td  class="fuzzy"></td><td class="depr"></td></tr>')
+            $row.data('index',i);
+            $row.bind('sync',sync).trigger('sync');
+            $('#msg_table').append($row);
+          }
+          selectMessage(0);
+          
+        });
+      };
 
-      // Jump to other Catalogues through drop down menu
-      $('#catalogue_list').blur( function(){
-        window.location.href = "edit.html?cat_id=" + ( $('#catalogue_list option:selected').attr('id') );
-      });
-
-      // Sort Table by the different headers
-      sortController.init();
-
-      // Initialize table size
-      initPanels();
-      // Add rollover effect to Side Bar
-      var left = $('div.block').offset().left;
-      var top = $('div.block').offset().top + $('div.block').height();
-      $('#ref_head').live("mouseover", function(){
-        $('#ref_data').css({'left':left, 'top':top}).fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#ref_data').fadeOut();
-      });
-      $('#update_head').live("mouseover", function(){
-        $('#update_data').css({'left':left, 'top':top}).fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#update_data').fadeOut();
-      });
-      $('#src_com_head').live("mouseover", function(){
-        $('#com_data').css({'left':left, 'top':top}).fadeIn('fast');
-      }).live("mouseout", function(){
-        $('#com_data').fadeOut();
-      });
-    };
+      // Fill the Edit Bar with the selected message
+      var fillEditBar = function(index){
+        
+        var msg = msgs[index];
+        $('#ref_data').html( (msg.referenc != "") ? msg.reference.replace( /\n/g, '<br />\n' ) : '-' );
+        $('#com_data').html( (msg.extracted_comments != "") ? msg.extracted_comments.replace(/\n/g, '<br />\n') : '-' );
+        $('#update_data').html( (msg.updated_at != "") ? msg.updated_at : '-' );
+        $('#comments').attr( 'value', msg.comments );
+        $('#msgid').html( (msg.msgid != "" ) ? msg.msgid.replace(/\n/g, '<br />\n') : "-" );
+        $('#msgstr').attr( 'value', msg.msgstr );
+        ( msg.fuzzy == 1 ) ? $('#fuzz').attr('checked',true) : $('#fuzz').attr('checked',false);
+        $('#edit_id').attr( 'value', msg.id );
+      };
+      
+      var nextMsgBlock = function(prev){
+        
+        
+      };
+      
+      var _init = function() {
+        getCatalogues(cat_id);
+         // Sort Table by the different headers
+        sortController.init();
+          
+        initPanels();
+        fillMsgTable(cat_id);
+        NotificationObj.init();
+        initEvents();
+      }
+      
+      
+      
+      return {
+        init: function() {
+          _init();
+          
+        }
+        
+      };
+      
+    })();
+    $(appController.init);      
     
     var sortController = {
       init: function() {
@@ -147,7 +225,6 @@
                                     .closest('thead')
                                     .find('th')
                                     .index(this);
-           srtBy = colHeader[column];
            var direction = !!$(this).hasClass('sort-desc') ||
             !$(this).hasClass('sort-asc');
             $(this).siblings().andSelf().removeClass('sort-asc').removeClass('sort-desc');
@@ -155,17 +232,11 @@
             direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'F' ? !direction : direction;
             direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'D' ? !direction : direction;
             $('#msg_table').tsort(column,direction);
-            nextMsgBlock();
             sortController.color();
         });
       },
       color: function(){
-        i = 0;
-        $('table').find('tbody tr').removeClass('odd');
-        $('#msg_table tr').each(function(){ $(this).toggleClass((i++ %2 == 0 && !$(this).hasClass('empty')) ? "odd" : ""); });
-        $('table').find('tbody tr').removeClass('selected');
-        currIdx=1;
-        $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
+
       }
     };
 
@@ -187,95 +258,48 @@
       });
     };
 
-    // Fill the table with all of the messages
-    var fillMsgTable = function(id, sort){
-      if ($('#errors span').text() != "") return;
-      if (!sort) sort = "id";
-      $.messageService('getMessages',[id, sort],function(data){
-        if (data.length == 0){
-          NotificationObj.showError("No Messages Found");
-          return;
-        }
-        msgs = data;
-        var msgid, msgstr, fuzzy='<td class="fuzzy"> </td>', depr='<td class="depr"> </td>';
-        $('tbody tr').each( function(){$(this).remove();});
-        for (var i=0; i < data.length; ++i){
-          msgid = '<td class="msgid"><div><input type="text" name="id" id="id" value="' + data[i]['id'] + '" /><input type="text" name="idx" id="idx" value="' + i + '" />' + data[i]['msgid'] + '</div></td>';
-          msgstr = '<td class="msgstr"><div>' + data[i]['msgstr'] + '</div></td>';
-          $('#msg_table').append("<tr>" + msgid + msgstr + fuzzy + depr + "</tr>");
-          if (data[i]['msgstr'] == "") {
-            $('#msg_table tr:last').addClass('empty');
-          }
-          if (data[i]['fuzzy'] == 1){
-            $('#msg_table tr:last .fuzzy').addClass('f').text('F');
-          }
-          if (data[i]['obsolete'] == 1){
-            $('#msg_table tr:last .depr').addClass('d').text('D');
-          }
-        }
-        i = 0;
-        $('#msg_table tr').each(function(){$(this).toggleClass((i++ %2 == 0 && !$(this).hasClass('empty')) ? "odd" : "")});
-        $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
-        fillEditBar();
-      });
-    };
+    
 
-    // Fill the Edit Bar with the selected message
-    var fillEditBar = function(){
-      var arr_idx = $('#msg_table tr:eq(' + (currIdx-1) + ') input:eq(1)').attr('value');
-      var msg = msgs[arr_idx];
-      $('#ref_data').html( (msg['reference'] != "") ? msg['reference'].replace( /\n/g, '<br />\n' ) : '-' );
-      $('#com_data').html( (msg['extracted_comments'] != "") ? msg['extracted_comments'].replace(/\n/g, '<br />\n') : '-' );
-      $('#update_data').html( (msg['updated_at'] != "") ? msg['updated_at'] : '-' );
-      $('#comments').attr( 'value', msg['comments'] );
-      $('#msgid').html( (msg['msgid'] != "" ) ? msg['msgid'].replace(/\n/g, '<br />\n') : "-" );
-      $('#msgstr').attr( 'value', msg['msgstr'] );
-      ( msg['fuzzy'] == 1 ) ? $('#fuzz').attr('checked',true) : $('#fuzz').attr('checked',false);
-      $('#edit_id').attr( 'value', msg['id'] );
-      $('#edit_idx').attr( 'value', arr_idx );
-    };
+    
 
-    var onBlur = function(prev){
-      // Check to see if the comments or translations have changed for the previous message
-      var arr_idx = $('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value');
-      var msg = msgs[arr_idx];
-      if ( $('#id').attr('value') && $('#comments').attr('value') != msg['comments'] ){
-        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['comments'] = $('#comments').attr('value');
-        dirty = true;
-      }
-      if ( $('#id').attr('value') && $('#msgstr').attr('value') != msg['msgstr'] ){
-        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['msgstr'] = $('#msgstr').attr('value');
-        dirty = true;
-      }
-      if ( $('#id').attr('value') && $('#fuzz').attr('checked') != msg['fuzzy'] ){
-        msgs[$('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value')]['fuzzy'] = !(msg['fuzzy']);
-        dirty = true;
-      }
-      if (dirty){
-        $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').attr('value'), $('#msgstr').attr('value'), $('#fuzz').attr('checked')], function(){
-          fillMsgTable(cat_id, srtBy);
-        });
-        dirty = false;
-      }
-    };
-
-    var nextMsgBlock = function(prev){
-      if (prev) onBlur(prev);
-      $('table').find('tbody tr').removeClass('selected');
-      $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
-      fillEditBar();
-    };
+    
 
     $(function() {
-      getCatalogues(cat_id);
-      fillMsgTable(cat_id);
-      $('table').find('tbody tr:eq(' +(currIdx-1)+ ')').addClass('selected');
-
-      NotificationObj.init();
-      initEvents();
+      
     });
    
     var initPanels = function(){
+      
+      // Jump to other Catalogues through drop down menu
+      $('#catalogue_list').blur( function(){
+        window.location.href = "edit.html?cat_id=" + ( $('#catalogue_list option:selected').attr('id') );
+      });
+      
+      // Add toggle effect
+      $('#edit_bar .block h3 a.expand').click(function(){
+        $(this).parents('.block').find('.data').toggle('fast');
+      }).parents('.block').find('.data').toggle();
+      
+      // Add rollover effect to Side Bar
+      var left = $('div.block').offset().left;
+      var top = $('div.block').offset().top + $('div.block').height();
+      $('#ref_head').live("mouseover", function(){
+        $('#ref_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#ref_data').fadeOut();
+      });
+      $('#update_head').live("mouseover", function(){
+        $('#update_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#update_data').fadeOut();
+      });
+      $('#src_com_head').live("mouseover", function(){
+        $('#com_data').css({'left':left, 'top':top}).fadeIn('fast');
+      }).live("mouseout", function(){
+        $('#com_data').fadeOut();
+      });
+  
+      
       $(this).resize(function() {
         var w = $(this).width();
         var h = $(this).height();
@@ -285,7 +309,8 @@
         $('#msg_table,#msg_table_head').css({width:w-l-20});
         $('#scroll_container').css('height',scroll_height);
       }).resize();
-    }
+      
+    };
 
   </script>
 </head>
