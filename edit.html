@@ -56,7 +56,7 @@
             };
             this.init = function(){
               // Hide btns
-              $('#errors #hideBtn').live('click', function(){Notifications.hideError();});
+              $('#errors #hideBtn').live('click', function(){$('#errors').fadeOut();});
               $('#messages #hideBtn').live('click', function(){
                 $('#messages').fadeOut();
                 $('#messages span').text("");
@@ -90,7 +90,7 @@
         document.getElementById('Olink').focus();
       });
 
-      // Add keyboard controls
+      // Add keyboard controls: 'i' or up arrow & 'j' or down arrow
      $('#Olink').keydown( function(e){
         switch(e.which){
           case 73:
@@ -236,7 +236,7 @@
       $('#edit_id').attr( 'value', msg['id'] );
       $('#edit_idx').attr( 'value', arr_idx );
     };
-    
+
     var onBlur = function(prev){
       // Check to see if the comments or translations have changed for the previous message
       var arr_idx = $('#msg_table tr:eq(' + (prev-1) + ') input:eq(1)').attr('value');
