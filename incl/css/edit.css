@@ -79,13 +79,13 @@ body,html {
 	float:right;
 }
 #edit_bar {
-    position:absolute;
-    left:0;
-    width:360px;
-    /*overflow-y:auto;*/
+	position:absolute;
+	left:0;
+	width:360px;
+	/*overflow-y:auto;*/
 	/*overflow-x:hidden;*/
-    float:left;
-    padding:0 5px 0px 12px;
+	float:left;
+	padding:0 5px 0px 12px;
 }
 #edit_bar h3{
 	margin:0;
@@ -122,7 +122,7 @@ body,html {
 	text-align:left;
 }
 #edit_bar .block #edit_bar_table #ref_head:hover, #edit_bar .block #edit_bar_table #update_head:hover, #edit_bar .block #edit_bar_table #src_com_head:hover {
-    color:#222;
+	color:#222;
 }
 #edit_bar .block #edit_bar_table #ref_head {
 	width:25%;
@@ -140,7 +140,7 @@ body,html {
 	display:none;
 	position:absolute;
 	text-align:center;
-    font-weight:bold;
+	font-weight:bold;
 	width:358px;
 	background-color:#FFF;
 	border: 1px solid #555;
@@ -181,33 +181,33 @@ body,html {
 }
 #next {
 	padding:5px;
-    margin-left:20px;
+	margin-left:20px;
 	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
 	border:1px solid #CCC;
 }
 #message_container {
-    margin-left:385px;
+	margin-left:385px;
 }
 #msg_table {
-    table-layout:fixed;
+	table-layout:fixed;
 	border-collapse:collapse;
 	border:1px solid #CCC;
 }
 #msg_table_head {
-    table-layout:fixed;
+	table-layout:fixed;
 	border-collapse:collapse;
 	border:1px solid #CCC;
 }
 #msg_table_head th {
-    text-align:left;
-    background: #E4E4E4 url('../img/navbg.gif') scroll repeat-x 0 0;
-    border-left:1px solid #DDD;
-    color:#111;
-    padding:8px 0;
+	text-align:left;
+	background: #E4E4E4 url('../img/navbg.gif') scroll repeat-x 0 0;
+	border-left:1px solid #DDD;
+	color:#111;
+	padding:8px 0;
 }
 #msg_table_head th a {
-    text-decoration:none;
-    color:#111;
+	text-decoration:none;
+	color:#111;
 }
 #msg_table_head th img {
 	border:none;
@@ -273,5 +273,5 @@ body,html {
 }
 #foot {
 	clear:both;
-    text-align:center;
+	text-align:center;
 }
