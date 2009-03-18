@@ -119,7 +119,7 @@
         if (dirty){
           msg.msgstr = $('#msgstr').val();
           msg.fuzzy = $('#fuzz').is(':checked');
-          msg.comment = $('#comments').val();
+          msg.comments = $('#comments').val();
           $row.trigger('sync');
           colorTable();
           NotificationObj.showMessage("Updated");
