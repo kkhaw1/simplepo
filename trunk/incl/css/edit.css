@@ -179,10 +179,6 @@ body,html {
 	overflow-x:hidden;
 	overflow-y:auto;
 }
-#id, #idx, #edit_id, #edit_idx {
-	display:none;
-	width:20px;
-}
 #next {
 	padding:5px;
     margin-left:20px;
@@ -261,11 +257,11 @@ body,html {
 	background-color:#136aca;
 	color:#FFF;
 }
-#msg_table td.fuzzy.f, #msg_table td.depr.d {
+#msg_table tr.f td.fuzzy, #msg_table tr.d td.depr {
 	color:#F00;
 	font-weight:bold;
 }
-#msg_table tr.selected td.fuzzy.f, #msg_table tr.selected td.depr.d {
+#msg_table tr.selected.f td.fuzzy, #msg_table tr.selected.d td.depr {
 	color:#000;
 }
 #msg_table td div {

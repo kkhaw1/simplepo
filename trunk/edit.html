@@ -9,9 +9,7 @@
   <script src="incl/js/jquery.tablesorter.js" type="text/javascript" charset="utf-8"></script>
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
-  
-  
-    
+
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
           {request:JSON.stringify(
@@ -45,7 +43,7 @@
               $('#errors').fadeOut();
             };
             this.showMessage = function(msg){
-              $('#messages span').append(msg + "<br />");
+              $('#messages span').text(msg);
               $('#messages').fadeIn();
             };
             this.hideMessage = function(){
@@ -57,18 +55,15 @@
               $('#errors #hideBtn').live('click', function(){$('#errors').fadeOut();});
               $('#messages #hideBtn').live('click', function(){
                 $('#messages').fadeOut();
-                $('#messages span').text("");
               });
             };
     };
     var NotificationObj = new Notifications();
 
     var appController = (function() {
-      
       var msgs;
       var cat_id = parseInt(window.location.href.match(/cat_id=(\d+)/)[1]);
-      
-      
+
       var initEvents = function() {
         // Add click event to message table entries
         $('#msg_table td').live("click",function() {
@@ -85,58 +80,58 @@
         
         $('#Olink').keydown( function(e){
             switch(e.which){
+              case 37:
               case 38:
                 moveBy(-1);
                 break;
+              case 39:
               case 40:
                 moveBy(1);
                 break;
             }
           });
-          
-         
       }
+
       var moveBy = function(num) {
-        var moveTo = getCurrentMessage() + num % msgs.length;
+        var moveTo = ( msgs.length + getCurrentMessage() + num ) % msgs.length;
         selectMessage(moveTo);
       }
+
       var selectMessage = function (index) {
         beforeBlur();
         $('#msg_table').find('tbody tr').removeClass('selected');
-        $('#msg_table').find('tbody tr:eq(' +(index)+ ')').addClass('selected');
-        fillEditBar(index);
+        var arr_index = $('#msg_table').find('tbody tr:eq(' +(index)+ ')').addClass('selected').data('index');
+        fillEditBar(arr_index);
         setScroll();
       }
+
       var getCurrentMessage = function() {
         return $('#msg_table tr.selected').prevAll().length;
       }
       
       var beforeBlur = function(){
-        
+        if ( !$('#msg_table tr.selected').length ) return;
         var $row = $('#msg_table tr:eq(' + getCurrentMessage() + ')');    
-       
+
         var msg = msgs[$row.data('index')];
-        var dirty = $('#msgstr').val() != msg.msgstr || $('#comments').val() != msg.comments;
-        
+        var dirty = $('#msgstr').val() != msg.msgstr || $('#comments').val() != msg.comments || $('#fuzz').is(':checked') != msg.fuzzy;
+
         if (dirty){
           msg.msgstr = $('#msgstr').val();
           msg.fuzzy = $('#fuzz').is(':checked');
           msg.comment = $('#comments').val();
           $row.trigger('sync');
-          $.messageService('updateMessage', [$('#edit_id').attr('value'), $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
-
-            
+          colorTable();
+          NotificationObj.showMessage("Updated");
+          $.messageService('updateMessage', [msg.id, $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
           });
-          dirty = false;
         }
-        
       };
       
       var setScroll = function() {
-        var ot = $('#msg_table tr.selected').position().top;
+        var ot = $('#msg_table tr.selected').position().top - $('#msg_table').position().top;
         var sh = $('#scroll_container').height();
-        // $('#scroll_container').scrollTop( sh/2-ot );
-        
+        $('#scroll_container').scrollTop( ot - (sh/2) );
       }
       
       // Fill the table with all of the messages
@@ -149,35 +144,33 @@
             NotificationObj.showError("No Messages Found");
             return;
           }
-          var msgid, msgstr, fuzzy='<td> </td>', depr='<td > </td>';
           $('tbody tr').remove();
           
           var sync = function () {
             var $row2 = $(this);
-            console.log(this);
             var msg2 = msgs[$row2.data("index")];
+
             $row2.find('td.msgid div').text(msg2.msgid).end()
-                .find('td.msgstr div').text(msg2.msgstr);
-            msg2.msgstr == "" && $row2.addClass('empty');
-            msg2.fuzzy && $row2.addClass('f').find('.fuzzy').text('F');
+                      .find('td.msgstr div').text(msg2.msgstr);
+            msg2.msgstr == "" ? $row2.addClass('empty') : $row2.removeClass('empty');
+            msg2.fuzzy == 1 ? $row2.addClass('f').find('.fuzzy').text('F') : $row2.removeClass('f').find('.fuzzy').text('');
             msg2.obsolete && $row2.addClass('d').find('.depr').text('D');
           }
           
           for (var i=0; i < msgs.length; ++i) {
-            var msg = msgs[i];
+            //var msg = msgs[i];
             var $row = $('<tr><td class="msgid"><div/></td><td class="msgstr"><div/></td><td  class="fuzzy"></td><td class="depr"></td></tr>')
             $row.data('index',i);
             $row.bind('sync',sync).trigger('sync');
             $('#msg_table').append($row);
           }
           selectMessage(0);
-          
+          colorTable();
         });
       };
 
       // Fill the Edit Bar with the selected message
       var fillEditBar = function(index){
-        
         var msg = msgs[index];
         $('#ref_data').html( (msg.referenc != "") ? msg.reference.replace( /\n/g, '<br />\n' ) : '-' );
         $('#com_data').html( (msg.extracted_comments != "") ? msg.extracted_comments.replace(/\n/g, '<br />\n') : '-' );
@@ -187,11 +180,6 @@
         $('#msgstr').attr( 'value', msg.msgstr );
         ( msg.fuzzy == 1 ) ? $('#fuzz').attr('checked',true) : $('#fuzz').attr('checked',false);
         $('#edit_id').attr( 'value', msg.id );
-      };
-      
-      var nextMsgBlock = function(prev){
-        
-        
       };
       
       var _init = function() {
@@ -204,17 +192,11 @@
         NotificationObj.init();
         initEvents();
       }
-      
-      
-      
       return {
         init: function() {
           _init();
-          
         }
-        
       };
-      
     })();
     $(appController.init);      
     
@@ -232,11 +214,8 @@
             direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'F' ? !direction : direction;
             direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'D' ? !direction : direction;
             $('#msg_table').tsort(column,direction);
-            sortController.color();
+            colorTable();
         });
-      },
-      color: function(){
-
       }
     };
 
@@ -258,18 +237,15 @@
       });
     };
 
-    
-
-    
-
-    
-
-    $(function() {
-      
-    });
+    var colorTable = function() {
+      var i=0;
+      $('#msg_table tr').removeClass('odd');
+      $('#msg_table tr').each( function() {
+        $(this).toggleClass( i++ %2 == 0  && !$(this).hasClass('empty')? "odd" : "");
+      });
+    };
    
     var initPanels = function(){
-      
       // Jump to other Catalogues through drop down menu
       $('#catalogue_list').blur( function(){
         window.location.href = "edit.html?cat_id=" + ( $('#catalogue_list option:selected').attr('id') );
@@ -298,7 +274,6 @@
       }).live("mouseout", function(){
         $('#com_data').fadeOut();
       });
-  
       
       $(this).resize(function() {
         var w = $(this).width();
@@ -355,7 +330,6 @@
     <div class="block" id="cntrl_blk">
       <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
       <input type="submit" id="next" name="next" value="Next Message &raquo;" />
-      <input type="text" id="edit_id" name="edit_id" /><input type="text" id="edit_idx" name="edit_idx" />
     </div>
   </div>
 

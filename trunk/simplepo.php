@@ -89,7 +89,7 @@ function usage() {
   echo "   Flags:\n";
   echo "   \tversion:\t-v\t--version\n";
   echo "   \tversion:\t \t--install\n";
-  echo "   \tforce:\t-f\t--force\n";
+  echo "   \tforce:\t\t-f\t--force\n";
   echo "   Options:\n";
   echo "  \t-i\tinputfilename\n";
   echo "  \t-o\toutputfilename\n";
@@ -100,9 +100,9 @@ function usage() {
   echo "  \tphp simplepo.php --force --install\n";
   echo "  \tphp simplepo.php -f --install\n\n";
   echo "     To read in a PO file:\n";
-  echo "  \tphp simplepo.php -n CatalogueName -i inputfilename\n";
+  echo "  \tphp simplepo.php -n \"CatalogueName\" -i inputfilename\n";
   echo "     To write to a PO file:\n";
-  echo "  \tphp simplepo.php -n CatalogueName -o outputfilename\n\n";
+  echo "  \tphp simplepo.php -n \"CatalogueName\" -o outputfilename\n\n";
 }
 
 function install( $force ){
