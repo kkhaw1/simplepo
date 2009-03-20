@@ -34,7 +34,8 @@ body,html {
 	width:500px;
 	padding:4px 10px;
 	z-index:1;
-	display:none;
+	display:block;
+	opacity:0;
 	text-align:center;
 	-moz-border-radius:6px;
 	-webkit-border-radius:6px;

@@ -29,36 +29,53 @@
       );     
     };
 
-    function Notifications(){
-            this.hideAll = function(){
-              this.hideError();
-              this.hideMessage();
-            };
-            this.showError = function(err){
-              $('#errors span').append(err + "<br />");
-              $('#errors').fadeIn();
-              $('#next').hide();
-            };
-            this.hideError = function(){
-              $('#errors').fadeOut();
-            };
-            this.showMessage = function(msg){
-              $('#messages span').text(msg);
-              $('#messages').fadeIn();
-            };
-            this.hideMessage = function(){
-              $('#messages').fadeOut();
-              $('#messages span').text("");
-            };
-            this.init = function(){
-              // Hide btns
-              $('#errors #hideBtn').live('click', function(){$('#errors').fadeOut();});
-              $('#messages #hideBtn').live('click', function(){
-                $('#messages').fadeOut();
-              });
-            };
-    };
-    var NotificationObj = new Notifications();
+    var NotificationObj = (function(msg){
+      var _init = function(){
+	$('#errors #hideBtn').live('click', function(){ hideError(); });
+	$('#messages #hideBtn').live('click', function(){ hideMessage();  });
+      };
+      var hideAll = function(){
+	hideError();
+	hideMessage();
+      };
+      var showError = function(msg){
+	$('<span />').html("<br />" + msg).appendTo('#errors p');
+	$('#errors').fadeIn();
+	$('#next').hide();
+      };
+      var hideError = function(){
+	$('#errors').fadeOut();
+      };
+      var showMessage = function(msg){
+	$('#messages').stop().css({opacity:0});
+	$('#messages span').text(msg);
+	$('#messages').animate({opacity:1},300, function(){ $('#messages').animate({opacity:0}, 3000); });
+      };
+      var hideMessage = function(){
+	$('#messages').css({opacity:0});
+      };
+
+      return {
+        init: function(){
+          _init();
+        },
+        hideAll: function(){
+          hideAll();
+        },
+        showError: function(msg){
+	  showError(msg);
+        },
+        hideError: function(){
+          hideError();
+        },
+        showMessage: function(msg){
+	  showMessage(msg);
+        },
+        hideMessage: function(){
+          hideMessage();
+        }
+      };
+    })();
 
     var appController = (function() {
       var msgs;
@@ -123,6 +140,7 @@
           $row.trigger('sync');
           colorTable();
           $.messageService('updateMessage', [msg.id, $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
+	    NotificationObj.showMessage("Message Updated Successfully.");
           });
         }
       };
@@ -206,8 +224,11 @@
                                     .closest('thead')
                                     .find('th')
                                     .index(this);
+	   var col_name = $(this).closest('thead').find('th:eq(' + column + ')').text();
+
            var direction = !!$(this).hasClass('sort-desc') ||
             !$(this).hasClass('sort-asc');
+	   NotificationObj.showMessage("Sorted by: " + col_name + ((direction) ? (" [Ascending]") : (" [Descending]")) );
             $(this).siblings().andSelf().removeClass('sort-asc').removeClass('sort-desc');
             $(this).addClass(direction ? 'sort-asc' : 'sort-desc');
             direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'F' ? !direction : direction;
@@ -290,8 +311,8 @@
 </head>
 
 <body onload="document.getElementById('Olink').focus()"><div id="body_w">
-  <div id="errors">Error: <span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
-  <div id="messages"><span></span><br /><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
+  <div id="errors"><p>-Error-</p><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
+  <div id="messages"><span></span></div>
   <div id="nav">
     <a href="#">Simple Po</a> 
     <a href="index.html" id="cat">Catalogue</a> 
