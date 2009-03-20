@@ -122,7 +122,6 @@
           msg.comments = $('#comments').val();
           $row.trigger('sync');
           colorTable();
-          NotificationObj.showMessage("Updated");
           $.messageService('updateMessage', [msg.id, $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
           });
         }
