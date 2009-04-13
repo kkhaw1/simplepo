@@ -10,6 +10,7 @@
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
 
+    // jQuery function that send Post request to json rpc
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
           {request:JSON.stringify(
@@ -20,7 +21,7 @@
           )},
           function(obj) {
             if(obj.error) {
-              error_handler ? error_handler(obj.error) : $('#errors span').text(obj.error.message + "  " + method).parent('#errors').show();
+              error_handler ? error_handler(obj.error) : NotificationObj.showError(obj.error.message + "  " + method);
             } else {
               callback(obj.result);
             }
@@ -29,6 +30,7 @@
       );     
     };
 
+    // Object that handles Error Notifications and Display Messages
     var NotificationObj = (function(msg){
       var _init = function(){
 	$('#errors #hideBtn').live('click', function(){ hideError(); });
@@ -95,7 +97,7 @@
           document.getElementById('Olink').focus();
         });
         
-        $('#Olink').keydown( function(e){
+        $('#Olink, #Tlink, #Flink, #Dlink').keydown( function(e){
             switch(e.which){
               case 37:
               case 38:
@@ -372,7 +374,7 @@
   </div>
 
   <div id="foot">
-    <span>-Footer Text-</span>
+    <span>SimplePO</span>
   </div>
 
   <div id="ref_data"></div>
