@@ -88,7 +88,7 @@ function usage() {
   echo "   ________________________________________\n";
   echo "   Flags:\n";
   echo "   \tversion:\t-v\t--version\n";
-  echo "   \tversion:\t \t--install\n";
+  echo "   \tinstall:\t \t--install\n";
   echo "   \tforce:\t\t-f\t--force\n";
   echo "   Options:\n";
   echo "  \t-i\tinputfilename\n";
