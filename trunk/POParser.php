@@ -1,16 +1,17 @@
 <?php
 interface ParseHandler{
   public function write( $msg, $isHeader );
+	public function read();
 }
 
 class DBHandler implements ParseHandler{
   public function init( $filename ){
     global $simplepo_config;
     $q = new Query();
-    $qry = "Select * from ". $simplepo_config['table_prefix'] ."catalogues where description = ?";
+    $qry = "SELECT * FROM {catalogues} WHERE description = ?";
     $arr = $q->sql($qry, $filename)->fetchAll();
     if (!$arr){
-      $qry = "Insert into ". $simplepo_config['table_prefix'] ."catalogues (description) values (?)";
+      $qry = "INSERT INTO {catalogues} (description) VALUES (?)";
       $q->sql($qry, $filename)->execute();
       $this->catalogue_id = $q->insertId();
     } else {
@@ -31,17 +32,20 @@ class DBHandler implements ParseHandler{
     if ( !$msg["previous-untranslated-string"] ) $msg["previous-untranslated-string"] = "";
     if ( $msg["fuzzy"] == NULL ) $msg["fuzzy"] = false;
 
-    $qry = "Insert into ". $simplepo_config['table_prefix'] ."messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $q->sql("Insert into simplepo_messages (catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
-                        $msg["reference"], $msg["flag"], $msg["obsolete"], $msg["previous-untranslated-string"], $msg["fuzzy"])->execute();
+    $q->sql("DELETE FROM {messages} 
+						WHERE  catalogue_id=? AND msgid=?",
+						$this->catalogue_id,$msg["msgid"])
+						->execute();
+    $q->sql("INSERT INTO {messages} 
+						(catalogue_id, msgid, msgstr, comments, extracted_comments,  reference, flag, obsolete, previous_untranslated_string, fuzzy)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
+            $msg["reference"], $msg["flag"], $msg["obsolete"], $msg["previous-untranslated-string"], $msg["fuzzy"])->execute();
   }
 
   public function read(){
     global $simplepo_config;
     $q = new Query();
-    $qry = "Select * from " . $simplepo_config['table_prefix'] . "messages where catalogue_id = ?";
+    $qry = "SELECT * FROM {messages} WHERE catalogue_id = ?";
     $res = $q->sql($qry, $this->catalogue_id)->fetchAll();
     return  $res;
   }
