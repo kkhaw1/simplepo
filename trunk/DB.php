@@ -22,9 +22,12 @@ class Query {
 	private $sql;
 	private $cursor;
 	private $link;
+	private $table_prefix;
 
 	function __construct($link = null) {
+		global $simplepo_config;
 		$this->sql = "";
+		$this->table_prefix = $simplepo_config['table_prefix'];
 		if(!$link) {
 			$this->link = DBConnection::getInstance(); 
 		}
@@ -44,6 +47,9 @@ class Query {
 		}
 		$args = func_get_args();
 		$sql = array_shift($args);
+		// replace {} with table prefix
+		$sql = preg_replace('/{([^}])*}/',$this->table_prefix . "\${1}",$sql);
+		// escape arguments 
 		$sql = str_replace('%','%%',$sql);
 		$sql = str_replace('?','%s',$sql);
 		$args = array_map(array('Query','escape'),$args);
