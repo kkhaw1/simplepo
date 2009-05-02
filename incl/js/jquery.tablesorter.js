@@ -19,6 +19,7 @@
 	}
 
 	$.fn.tsort = function(column,direction,compare) {
+
 		var d = direction == -1 ? -1 : !!direction ? 1 : -1;
 
 		var comp = $.isFunction(compare) ? compare :
@@ -47,7 +48,7 @@
 				arrayRows[i] = arrayRows[i].dom_element
 			}
 			$table.find('tbody').append( $(arrayRows) );  // append is faster than prepend
-		
+			
 		});
 	}
 })(jQuery);

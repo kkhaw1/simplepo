@@ -10,6 +10,12 @@
   <script src="incl/js/json2.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
 
+    $.escape = function(str) {
+      return str.replace('&','&amp;').replace('>','&gt;').replace('<','&lt;').replace('"','&quot;');
+    }
+    $.nl2br = function(str) {
+      return str.replace("\n",'<br />');
+    }
     // jQuery function that send Post request to json rpc
     $.messageService = function(method, params,callback,error_handler) {
       $.post('message_service.php',
@@ -33,28 +39,28 @@
     // Object that handles Error Notifications and Display Messages
     var NotificationObj = (function(msg){
       var _init = function(){
-	$('#errors #hideBtn').live('click', function(){ hideError(); });
-	$('#messages #hideBtn').live('click', function(){ hideMessage();  });
+	      $('#errors #hideBtn').live('click', function(){ hideError(); });
+	      $('#messages #hideBtn').live('click', function(){ hideMessage();  });
       };
       var hideAll = function(){
-	hideError();
-	hideMessage();
+	      hideError();
+	      hideMessage();
       };
       var showError = function(msg){
-	$('<span />').html("<br />" + msg).appendTo('#errors p');
-	$('#errors').fadeIn();
-	$('#next').hide();
+	      $('<span />').html("<br />" + msg).appendTo('#errors p');
+	      $('#errors').fadeIn();
+	      $('#next').hide();
       };
       var hideError = function(){
-	$('#errors').fadeOut();
+	      $('#errors').fadeOut();
       };
       var showMessage = function(msg){
-	$('#messages').stop().css({opacity:0});
-	$('#messages span').text(msg);
-	$('#messages').animate({opacity:1},300, function(){ $('#messages').animate({opacity:0}, 3000); });
+	      $('#messages').stop().css({opacity:0});
+	      $('#messages span').text(msg);
+	      $('#messages').animate({opacity:1},300, function(){ $('#messages').animate({opacity:0}, 3000); });
       };
       var hideMessage = function(){
-	$('#messages').css({opacity:0});
+	      $('#messages').css({opacity:0});
       };
 
       return {
@@ -65,60 +71,73 @@
           hideAll();
         },
         showError: function(msg){
-	  showError(msg);
+	        showError(msg);
         },
         hideError: function(){
           hideError();
         },
         showMessage: function(msg){
-	  showMessage(msg);
+	        showMessage(msg);
         },
         hideMessage: function(){
           hideMessage();
         }
       };
     })();
-
+    // GLOBAL 
+    
+    
     var appController = (function() {
       var msgs;
       var cat_id = parseInt(window.location.href.match(/cat_id=(\d+)/)[1]);
-
+      
       var initEvents = function() {
         // Add click event to message table entries
         $('#msg_table td').live("click",function() {
           selectMessage($(this).parent('tr').prevAll().length );
-          document.getElementById('Olink').focus();
         });
 
         // Add click event to next button in the edit bar
         $('#next').live("click", function(e){
           e.preventDefault();
-          moveBy(1)
-          document.getElementById('Olink').focus();
+          moveBy(1);
+          $('#msgstr').focus();
         });
         
-        $('#Olink, #Tlink, #Flink, #Dlink').keydown( function(e){
-            switch(e.which){
+
+        $(document).keydown( function(e) {
+          
+          var nt = e.target.type,code;
+          if( !(nt == 'input' || nt == 'textarea') ) {
+            code = e.which || e.keyCode;
+            switch(e.which || e.keyCode) {
               case 37:
               case 38:
                 moveBy(-1);
+                e.preventDefault();
                 break;
               case 39:
               case 40:
                 moveBy(1);
+                e.preventDefault();
                 break;
             }
-          });
+          }
+        }).keypress(function(e) {
+          
+        }).keyup(function() {
+          
+        });
       }
 
       var moveBy = function(num) {
-        var moveTo = ( msgs.length + getCurrentMessage() + num ) % msgs.length;
-        selectMessage(moveTo);
+        var moveTo = getCurrentMessage() + num;
+        moveTo < msgs.length && moveTo >= 0 && selectMessage(moveTo);
       }
 
       var selectMessage = function (index) {
         beforeBlur();
-        $('#msg_table').find('tbody tr').removeClass('selected');
+        $('#msg_table').find('tbody tr.selected').removeClass('selected');
         var arr_index = $('#msg_table').find('tbody tr:eq(' +(index)+ ')').addClass('selected').data('index');
         fillEditBar(arr_index);
         setScroll();
@@ -133,70 +152,95 @@
         var $row = $('#msg_table tr:eq(' + getCurrentMessage() + ')');    
 
         var msg = msgs[$row.data('index')];
-        var dirty = $('#msgstr').val() != msg.msgstr || $('#comments').val() != msg.comments || $('#fuzz').is(':checked') != msg.fuzzy;
+        var dirty = $('#msgstr').val() != msg.msgstr || 
+                    $('#comments').val() != msg.comments || 
+                    $('#fuzz').is(':checked') != msg.fuzzy;
 
         if (dirty){
           msg.msgstr = $('#msgstr').val();
           msg.fuzzy = $('#fuzz').is(':checked');
           msg.comments = $('#comments').val();
           $row.trigger('sync');
-          colorTable();
-          $.messageService('updateMessage', [msg.id, $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], function() {
-	    NotificationObj.showMessage("Message Updated Successfully.");
-          });
+          $.messageService('updateMessage', 
+                          [msg.id, $('#comments').val(), $('#msgstr').val(), $('#fuzz').is(':checked')], 
+                          function() {} 
+                          );
         }
       };
       
       var setScroll = function() {
         var ot = $('#msg_table tr.selected').position().top - $('#msg_table').position().top;
+        var rh = $('#msg_table tr.selected').height();
         var sh = $('#scroll_container').height();
-        $('#scroll_container').scrollTop( ot - (sh/2) );
-      }
-      
+        var st = $('#scroll_container').scrollTop();
+        if(ot < st) {
+          $('#scroll_container').scrollTop(ot);
+        }
+        if(ot + rh - sh > st) {
+          $('#scroll_container').scrollTop(ot+rh-sh);
+        }
+      };
+      var sync = function () {
+
+        var $row2 = $(this);
+        var msg2 = msgs[$row2.data("index")];
+
+        $row2.find('td.msgid div').text(msg2.msgid).end()
+             .find('td.msgstr div').text(msg2.msgstr);
+        msg2.msgstr == "" ? $row2.addClass('empty') : $row2.removeClass('empty');
+        msg2.fuzzy == 1 ? $row2.addClass('f').find('.fuzzy').text('F') : $row2.removeClass('f').find('.fuzzy').text('');
+        msg2.obsolete && $row2.addClass('d').find('.depr').text('D');
+      };
       // Fill the table with all of the messages
-      var fillMsgTable = function(id){
+      var fillMsgTable = function(catalogue_id) {
         if ($('#errors span').text() != "") return;
-      
-        $.messageService('getMessages',[id, "id"],function(data){
-          msgs = data;
+        $.messageService('getMessages',[catalogue_id, "id"],function(d){
+          msgs = d; // save data to global messages
           if (msgs.length == 0){
             NotificationObj.showError("No Messages Found");
-            return;
+          } else {
+            var $tbody = $('#msg_table tbody').empty(), html="";
+            
+            $.each(msgs,function(i,e){
+              html += renderRowAsString(e);
+            })
+            $tbody.append(html)
+              .find('tr')
+              .each(function(i,e){
+                $(e).data('index',i)
+                .bind('sync',sync);
+              });
+            selectMessage(0);
           }
-          $('tbody tr').remove();
-          
-          var sync = function () {
-            var $row2 = $(this);
-            var msg2 = msgs[$row2.data("index")];
-
-            $row2.find('td.msgid div').text(msg2.msgid).end()
-                      .find('td.msgstr div').text(msg2.msgstr);
-            msg2.msgstr == "" ? $row2.addClass('empty') : $row2.removeClass('empty');
-            msg2.fuzzy == 1 ? $row2.addClass('f').find('.fuzzy').text('F') : $row2.removeClass('f').find('.fuzzy').text('');
-            msg2.obsolete && $row2.addClass('d').find('.depr').text('D');
-          }
-          
-          for (var i=0; i < msgs.length; ++i) {
-            //var msg = msgs[i];
-            var $row = $('<tr><td class="msgid"><div/></td><td class="msgstr"><div/></td><td  class="fuzzy"></td><td class="depr"></td></tr>')
-            $row.data('index',i);
-            $row.bind('sync',sync).trigger('sync');
-            $('#msg_table').append($row);
-          }
-          selectMessage(0);
-          colorTable();
         });
       };
+      var renderRowAsString = function(obj) {
+        var tr_class = "" 
+                      + (!obj.msgstr.length ? 'empty ' : '')
+                      + (obj.fuzzy == 1 ? 'f' : '')
+                      + (obj.obsolete ? 'd' : ''); 
+        return  ''
+                +  '<tr class="' + tr_class + '"><td class="msgid"><div><span>'
+                + $.escape(obj.msgid) + '</span></div></td>'
+                + '<td class="msgstr"><div>'
+                + $.escape(obj.msgstr) + '</div></td>'
+                + '<td class="fuzzy">'
+                + (obj.fuzzy == 1 ? 'F' : '')
+                + '</td>'
+                + '<td class="depr">'
+                + (obj.obsolete ? 'D' : '')
+                + '</td>';
+      }
 
       // Fill the Edit Bar with the selected message
       var fillEditBar = function(index){
         var msg = msgs[index];
-        $('#ref_data').html( (msg.referenc != "") ? msg.reference.replace( /\n/g, '<br />\n' ) : '-' );
-        $('#com_data').html( (msg.extracted_comments != "") ? msg.extracted_comments.replace(/\n/g, '<br />\n') : '-' );
-        $('#update_data').html( (msg.updated_at != "") ? msg.updated_at : '-' );
-        $('#comments').attr( 'value', msg.comments );
-        $('#msgid').html( (msg.msgid != "" ) ? msg.msgid.replace(/\n/g, '<br />\n') : "-" );
-        $('#msgstr').attr( 'value', msg.msgstr );
+        $('#ref_data').html( $.nl2br($.escape(msg.reference)) || '-' );
+        $('#com_data').html( $.nl2br($.escape(msg.extracted_comments)) || '-' );
+        $('#update_data').html( msg.updated_at || '-' );
+        $('#comments').val(msg.comments);
+        $('#msgid').html( $.nl2br($.escape(msg.msgid)) || "-" );
+        $('#msgstr').val(msg.msgstr);
         ( msg.fuzzy == 1 ) ? $('#fuzz').attr('checked',true) : $('#fuzz').attr('checked',false);
         $('#edit_id').attr( 'value', msg.id );
       };
@@ -222,21 +266,16 @@
     var sortController = {
       init: function() {
         $('#msg_table_head thead th').click(function() {
-          var column = $(this)
-                                    .closest('thead')
-                                    .find('th')
-                                    .index(this);
-	   var col_name = $(this).closest('thead').find('th:eq(' + column + ')').text();
-
-           var direction = !!$(this).hasClass('sort-desc') ||
-            !$(this).hasClass('sort-asc');
-	   NotificationObj.showMessage("Sorted by: " + col_name + ((direction) ? (" [Ascending]") : (" [Descending]")) );
-            $(this).siblings().andSelf().removeClass('sort-asc').removeClass('sort-desc');
-            $(this).addClass(direction ? 'sort-asc' : 'sort-desc');
-            direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'F' ? !direction : direction;
-            direction = $('#msg_table_head thead th:eq(' + column + ')').text() == 'D' ? !direction : direction;
-            $('#msg_table').tsort(column,direction);
-            colorTable();
+          var column_index = $(this).closest('thead')
+                              .find('th')
+                              .index(this);
+          var direction = !!$(this).hasClass('sort-desc') || !$(this).hasClass('sort-asc');
+          
+          $(this).siblings().andSelf().removeClass('sort-asc').removeClass('sort-desc');
+          
+          $(this).addClass(direction ? 'sort-asc' : 'sort-desc');
+          
+          $('#msg_table').tsort(column_index,direction);
         });
       }
     };
@@ -249,7 +288,9 @@
           return;
         }
         for (var i = 0; i<data.length; ++i){
-            $("<option />").attr('id',data[i]['id']).text(data[i]['description']).appendTo($('#catalogue_list'));
+            $("<option />").attr('id',data[i]['id']).text(data[i]['description'])
+                           .appendTo($('#catalogue_list'))
+                           .attr('selected',data[i]['id'] == catId ? 'selected' : '');
         }
         if (catId > 0 && catId < data.length + 1){
           $('#cat_name').text(data[catId-1]['description']);
@@ -258,18 +299,10 @@
         }
       });
     };
-
-    var colorTable = function() {
-      var i=0;
-      $('#msg_table tr').removeClass('odd');
-      $('#msg_table tr').each( function() {
-        $(this).toggleClass( i++ %2 == 0  && !$(this).hasClass('empty')? "odd" : "");
-      });
-    };
    
     var initPanels = function(){
       // Jump to other Catalogues through drop down menu
-      $('#catalogue_list').blur( function(){
+      $('#catalogue_list').change( function(){
         window.location.href = "edit.html?cat_id=" + ( $('#catalogue_list option:selected').attr('id') );
       });
       
@@ -300,7 +333,7 @@
       $(this).resize(function() {
         var w = $(this).width();
         var h = $(this).height();
-        var scroll_height = h - $('#scroll_container').offset().top - ( $('#foot').outerHeight() * 2);
+        var scroll_height = h - $('#scroll_container').offset().top - ( $('#foot').outerHeight());
         var l = $('#message_container').offset().left;
         $('#message_container').css({width:w-l});
         $('#msg_table,#msg_table_head').css({width:w-l-20});
@@ -312,7 +345,7 @@
   </script>
 </head>
 
-<body onload="document.getElementById('Olink').focus()"><div id="body_w">
+<body><div id="body_w">
   <div id="errors"><p>-Error-</p><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="messages"><span></span></div>
   <div id="nav">
@@ -350,35 +383,43 @@
       <textarea id="msgstr" class="data" spellcheck="false"></textarea>
     </div>
     <div class="block" id="cntrl_blk">
-      <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
+      
       <input type="submit" id="next" name="next" value="Next Message &raquo;" />
+      <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
     </div>
   </div>
 
   <div id="message_container">
-    <table id="msg_table_head">
+    <table id="msg_table_head" cellspacing=0>
         <thead>
             <tr>
-                <th class="msgid"><a href="#" title="Original String" id="Olink">Original String</a><img src="incl/img/blank.gif"/></th>
-                <th class="msgstr"><a href="#" title="Translated String" id="Tlink">Translation</a><img src="incl/img/blank.gif"/></th>
-                <th class="fuzzy"><a href="#" title="Fuzzy" id="Flink">F</a><img src="incl/img/blank.gif"/></th>
-                <th class="depr"><a href="#" title="Deprecated" id="Dlink">D</a><img src="incl/img/blank.gif"/></th>
+                <th class="msgid">
+                  <div>
+                  <img src="incl/img/blank.gif"/>Original String
+                  </div>
+                </th>
+                <th class="msgstr"><img src="incl/img/blank.gif"/>Translation</th>
+                <th class="fuzzy"><img src="incl/img/blank.gif"/>F</th>
+                <th class="depr"><img src="incl/img/blank.gif"/>D</th>
             </tr>
         </thead>
     </table>
     <div id="scroll_container">
-        <table id="msg_table">
+        <table id="msg_table" cellspacing=0>
             <tbody></tbody>
         </table>
     </div>
   </div>
 
-  <div id="foot">
-    <span>SimplePO</span>
-  </div>
+  
 
   <div id="ref_data"></div>
   <div id="update_data"></div>
   <div id="com_data"></div>
-</div></body>
+</div>
+<div id="foot">
+  <a href="http://code.google.com/p/simplepo/">Simple Po</a> by the hackers at <a href="http://www.yabla.com/">Yabla</a>
+</div>
+
+</body>
 </html>
