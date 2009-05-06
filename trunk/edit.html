@@ -11,7 +11,7 @@
   <script type="text/javascript" charset="utf-8">
 
     $.escape = function(str) {
-      return str.replace('&','&amp;').replace('>','&gt;').replace('<','&lt;').replace('"','&quot;');
+      return str.replace(/&/g,'&amp;').replace(/>/g,'&gt;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     }
     $.nl2br = function(str) {
       return str.replace("\n",'<br />');
@@ -155,8 +155,9 @@
         var dirty = $('#msgstr').val() != msg.msgstr || 
                     $('#comments').val() != msg.comments || 
                     $('#fuzz').is(':checked') != msg.fuzzy;
-
+                    
         if (dirty){
+          console.log(msg.fuzzy ==$('#fuzz').is(':checked'));
           msg.msgstr = $('#msgstr').val();
           msg.fuzzy = $('#fuzz').is(':checked');
           msg.comments = $('#comments').val();
@@ -189,14 +190,14 @@
              .find('td.msgstr div').text(msg2.msgstr);
         msg2.msgstr == "" ? $row2.addClass('empty') : $row2.removeClass('empty');
         msg2.fuzzy == 1 ? $row2.addClass('f').find('.fuzzy').text('F') : $row2.removeClass('f').find('.fuzzy').text('');
-        msg2.obsolete && $row2.addClass('d').find('.depr').text('D');
+        msg2.is_obsolete && $row2.addClass('d').find('.depr').text('D');
       };
       // Fill the table with all of the messages
       var fillMsgTable = function(catalogue_id) {
         if ($('#errors span').text() != "") return;
-        $.messageService('getMessages',[catalogue_id, "id"],function(d){
+        $.messageService('getMessages',[catalogue_id],function(d){
           msgs = d; // save data to global messages
-          if (msgs.length == 0){
+          if (!(msgs && msgs.length) ) {
             NotificationObj.showError("No Messages Found");
           } else {
             var $tbody = $('#msg_table tbody').empty(), html="";
@@ -217,8 +218,8 @@
       var renderRowAsString = function(obj) {
         var tr_class = "" 
                       + (!obj.msgstr.length ? 'empty ' : '')
-                      + (obj.fuzzy == 1 ? 'f' : '')
-                      + (obj.obsolete ? 'd' : ''); 
+                      + (obj.fuzzy == 1 ? 'f ' : '')
+                      + (obj.is_obsolete ? 'd ' : ''); 
         return  ''
                 +  '<tr class="' + tr_class + '"><td class="msgid"><div><span>'
                 + $.escape(obj.msgid) + '</span></div></td>'
@@ -228,7 +229,7 @@
                 + (obj.fuzzy == 1 ? 'F' : '')
                 + '</td>'
                 + '<td class="depr">'
-                + (obj.obsolete ? 'D' : '')
+                + (obj.is_obsolete ? 'D' : '')
                 + '</td>';
       }
 
@@ -288,12 +289,12 @@
           return;
         }
         for (var i = 0; i<data.length; ++i){
-            $("<option />").attr('id',data[i]['id']).text(data[i]['description'])
+            $("<option />").attr('id',data[i]['id']).text(data[i]['name'])
                            .appendTo($('#catalogue_list'))
                            .attr('selected',data[i]['id'] == catId ? 'selected' : '');
         }
         if (catId > 0 && catId < data.length + 1){
-          $('#cat_name').text(data[catId-1]['description']);
+          $('#cat_name').text(data[catId-1]['name']);
         } else {
           NotificationObj.showError("Catalogue [" + catId + "] Not Found.");
         }

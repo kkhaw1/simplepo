@@ -39,19 +39,29 @@ class JSON_RPC {
 class MessageService {
 	function __construct() {
 	}
-	function getMessages($id, $sortBy) {
+	function getMessages($id) {
       $q = new Query();
-      $order = ($sortBy == "fuzzy" || $sortBy == "obsolete") ? "DESC" :  "" ;
-      return $q->sql("SELECT * FROM simplepo_messages WHERE catalogue_id=? ORDER BY $sortBy $order", $id)->fetchAll();
+      $messages = $q->sql("SELECT * FROM {messages} WHERE catalogue_id=?", $id)->fetchAll();
+			foreach($messages as &$m) {
+				$m['fuzzy'] = strpos($m['flags'],'fuzzy') !== FALSE;
+				$m['is_obsolete'] = !!$m['is_obsolete'];
+			}
+			return $messages;
 	}
     function getCatalogues(){
       $q = new Query();
-      return $q->sql("SELECT * FROM simplepo_catalogues")->fetchAll();
+      return $q->sql("SELECT c.name,c.id,COUNT(*) as message_count, 
+														 SUM(LENGTH(m.msgstr) >0) as translated_count
+														 
+											FROM {catalogues} c
+											LEFT JOIN {messages} m ON m.catalogue_id=c.id
+											GROUP BY c.id")->fetchAll();
     }
     function updateMessage($id, $comments, $msgstr, $fuzzy){
       $q = new Query();
-      $q->sql("UPDATE simplepo_messages SET comments=?, msgstr=?, fuzzy=? WHERE id=?", $comments, $msgstr, $fuzzy, $id)->execute();
-      return "UPDATE simplepo_messages SET comments='$comments', msgstr='$msgstr' WHERE id='$id'";
+			$flags = $fuzzy ? 'fuzzy' : '';
+      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE id=?", $comments, $msgstr, $flags, $id)->execute();
+      echo "true";
     }
 	function makeError() {
 		throw new Exception("This is an error");
