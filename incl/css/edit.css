@@ -59,7 +59,7 @@ body,html {
 	color:#333;
 	font-weight:bold;
 	border-left:1px solid #FFF;
-	border-right-color:1px solid #AAA;
+	border-right:1px solid #AAA;
 }
 #nav a:hover {
 	background-color:#666;
@@ -259,6 +259,13 @@ body,html {
 #msg_table tr.empty td {
 	background-color:#FFFFDD;
 	font-weight:bold;
+}
+#msg_table tr.f td {
+	background-color:#FFFFDD;
+	font-weight:bold;
+}
+#msg_table tr.d td {
+	color:#999;
 }
 #msg_table tr.odd td {
 	/* background-color:#E4F1FF; */

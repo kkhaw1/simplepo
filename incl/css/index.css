@@ -9,7 +9,7 @@ html, body {
 #cat_box {
 	margin-top:30px;
 	width:400px;
-    text-align:center;
+   text-align:center;
 	padding:0 5px 0px 12px;
 }
 #cat_box h3{
@@ -28,16 +28,21 @@ html, body {
 	padding:5px 8px 9px;
 }
 #cat_box .block .data a {
-	padding: 5px 5px;
-	cursor: pointer;
-	color:#000;
-	text-decoration:none;
-	font-weight:none;
-	display:block;
+	font-size:130%;
+	color:#00C;
 }
-#cat_box .block .data a:hover {
-	color:#888;
+ul#catalogue_list {
+	list-style-type:none;
+	margin:0;
+	padding:0;
 }
+ul#catalogue_list li {
+	margin:0;
+	padding:1em 0;
+	border-bottom:1px solid #CCC;
+}
+
+
 #cat_box .block h3 {
 	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
 	border:1px solid #CCC;
@@ -60,6 +65,19 @@ html, body {
 #cat_box .block h3 a:hover {
 	color:#000;
     font-weight:bold;
+} 
+.progressbar {
+	width:100px;
+	border:1px solid #CCC;
+	height:10px;
+	margin:0 3px;
+	background-color:#A00;
+	display:inline-block;
+	vertical-align:;
 }
-
-
+.progressbar .inner {
+	width:0px;
+	height:100%;
+	background-color:#0A0;
+	float-left;
+}

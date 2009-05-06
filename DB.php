@@ -48,7 +48,7 @@ class Query {
 		$args = func_get_args();
 		$sql = array_shift($args);
 		// replace {} with table prefix
-		$sql = preg_replace('/{([^}])*}/',$this->table_prefix . "\${1}",$sql);
+		$sql = preg_replace('/{([^}]*)}/',$this->table_prefix . '${1}',$sql);
 		// escape arguments 
 		$sql = str_replace('%','%%',$sql);
 		$sql = str_replace('?','%s',$sql);
@@ -157,6 +157,9 @@ class Query {
 	}
 	function getCursor() {
 		return $this->cursor;
+	}
+	public function __toString() {
+		return $this->sql;
 	}
 	public static function escape($value) {
 		if (is_int($value) || is_float($value) ) {
