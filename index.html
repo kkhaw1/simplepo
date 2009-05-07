@@ -35,7 +35,6 @@
             $row.find('.translated').text(data[i].translated_count);
             $row.find('.total').text(data[i].message_count);
             $row.find('.percent').text(parseInt(data[i].translated_count / data[i].message_count *100) + " %");
-            console.log($row.find('.progressbar').width() * ( data[i].translated_count / data[i].message_count))
           }
         });
       });
