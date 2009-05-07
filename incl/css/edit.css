@@ -35,7 +35,7 @@ body,html {
 	width:500px;
 	padding:4px 10px;
 	z-index:1;
-	display:block;
+	display:none;
 	opacity:0;
 	text-align:center;
 	-moz-border-radius:6px;
@@ -288,6 +288,15 @@ body,html {
 	line-height:130%;
 	margin:0;
 	padding:0 1em 0 .5em;
+}
+#loading_indicator {
+	background-color:#FFF;
+	height:200px;
+	border:1px solid #DDD;
+	font-size:20px;
+	text-align:center;
+	padding-top:3em;
+	margin-right:1em;
 }
 #foot {
 	clear:both;

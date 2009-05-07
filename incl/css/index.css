@@ -8,8 +8,9 @@ html, body {
 }
 #cat_box {
 	margin-top:30px;
+	margin:30px auto;
 	width:400px;
-   text-align:center;
+   text-align:left;
 	padding:0 5px 0px 12px;
 }
 #cat_box h3{
@@ -72,8 +73,6 @@ ul#catalogue_list li {
 	height:10px;
 	margin:0 3px;
 	background-color:#A00;
-	display:inline-block;
-	vertical-align:;
 }
 .progressbar .inner {
 	width:0px;
