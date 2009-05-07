@@ -156,8 +156,7 @@
                     $('#comments').val() != msg.comments || 
                     $('#fuzz').is(':checked') != msg.fuzzy;
                     
-        if (dirty){
-          console.log(msg.fuzzy ==$('#fuzz').is(':checked'));
+        if (dirty) {
           msg.msgstr = $('#msgstr').val();
           msg.fuzzy = $('#fuzz').is(':checked');
           msg.comments = $('#comments').val();
