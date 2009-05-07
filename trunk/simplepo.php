@@ -129,6 +129,7 @@ USAGE;
 	      `reference` text NOT NULL,
 	      `flags` text NOT NULL,
 	      `is_obsolete` tinyint(1) NOT NULL,
+				`is_header` tinyint(1) NOT NULL,
 	      `previous_untranslated_string` text NOT NULL,
 	      `updated_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
 	      PRIMARY KEY  (`id`)

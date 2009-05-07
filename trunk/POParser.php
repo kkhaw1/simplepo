@@ -32,21 +32,22 @@ class DBPoMsgStore implements PoMsgStore {
     $q = new Query();
 
 		$msg['is_obsolete'] = !!$msg['is_obsolete'] ? 1 : 0;
+		$msg['is_header'] = $isHeader ? 1 : 0;
 
     $q->sql("DELETE FROM {messages} 
 						WHERE  catalogue_id=? AND msgid=?",
 						$this->catalogue_id,$msg["msgid"])
 						->execute();
     $q->sql("INSERT INTO {messages} 
-						(catalogue_id, msgid, msgstr, comments, extracted_comments, reference,flags, is_obsolete, previous_untranslated_string)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
-            $msg["reference"], $msg["flags"], $msg["is_obsolete"], $msg["previous-untranslated-string"])
+						(catalogue_id, msgid, msgstr, comments, extracted_comments, reference,flags, is_obsolete, previous_untranslated_string,is_header)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
+            $msg["reference"], $msg["flags"], $msg["is_obsolete"], $msg["previous-untranslated-string"],$msg['is_header'])
 						->execute();
   }
 
   public function read(){
     $q = new Query();
-    return $q->sql("SELECT * FROM {messages} WHERE catalogue_id = ? ORDER BY is_obsolete,id",
+    return $q->sql("SELECT * FROM {messages} WHERE catalogue_id = ? ORDER BY is_header DESC,is_obsolete,id",
  										$this->catalogue_id)->fetchAll();
   }
 }
