@@ -13,9 +13,10 @@ class SimplePO{
 	protected $stderrh;
 
 	function main($argc, $argv){
+	  $this->stderrh = fopen('php://stderr','w');
 	  $this->parseArguments($argc, $argv);
 	  $MsgStore = new DBPoMsgStore();
-		$this->stderrh = fopen('php://stderr','w');
+		
 		
 		if($this->doInstall) {
 			$this->install($this->force);
