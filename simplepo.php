@@ -123,15 +123,15 @@ USAGE;
 	    CREATE TABLE IF NOT EXISTS `{messages}` (
 	      `id` int(11) NOT NULL auto_increment,
 	      `catalogue_id` int(11) NOT NULL,
-	      `msgid` text NOT NULL,
-	      `msgstr` text NOT NULL,
-	      `comments` text NOT NULL,
-	      `extracted_comments` text NOT NULL,
-	      `reference` text NOT NULL,
-	      `flags` text NOT NULL,
+	      `msgid` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+	      `msgstr` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+	      `comments` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+	      `extracted_comments` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+	      `reference` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+	      `flags` text  CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
 	      `is_obsolete` tinyint(1) NOT NULL,
 				`is_header` tinyint(1) NOT NULL,
-	      `previous_untranslated_string` text NOT NULL,
+	      `previous_untranslated_string` text CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
 	      `updated_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
 	      PRIMARY KEY  (`id`)
 	    ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1
