@@ -179,7 +179,8 @@ body,html {
 }
 #next {
 	padding:5px;
-	margin-left:20px;
+	margin:0 2em 0 20px;
+
 	background:#DFDFDF url('../img/gray-grad.png') repeat-x scroll top left;
 	border:1px solid #CCC;
 }
