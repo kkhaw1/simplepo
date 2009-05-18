@@ -105,6 +105,9 @@
           $('#msgstr').focus();
         });
         
+        $('#msgstr').focus(function(e){
+          $('#fuzz').attr('checked',false);
+        });
 
         $(document).keydown( function(e) {
           
@@ -388,7 +391,7 @@
     <div class="block" id="cntrl_blk">
       
       <input type="submit" id="next" name="next" value="Next Message &raquo;" />
-      <input type="checkbox" id="fuzz" name="fuzz" />Add/Remove Fuzzy Flag
+      <label for="fuzz">Mark as Fuzzy</label> <input type="checkbox" id="fuzz" name="fuzz" /> 
     </div>
   </div>
 
