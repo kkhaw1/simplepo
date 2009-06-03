@@ -161,7 +161,7 @@
                     $('#fuzz').is(':checked') != msg.fuzzy;
                     
         if (dirty) {
-          msg.msgstr = $('#msgstr').val();
+          msg.msgstr = $('#msgstr').val().replace(/\n+$/,"");
           msg.fuzzy = $('#fuzz').is(':checked');
           msg.comments = $('#comments').val();
           $row.trigger('sync');
