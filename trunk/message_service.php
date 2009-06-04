@@ -41,7 +41,12 @@ class MessageService {
 	}
 	function getMessages($id) {
       $q = new Query();
-      $messages = $q->sql("SELECT * FROM {messages} WHERE catalogue_id=? AND is_header <> 1", $id)->fetchAll();
+      $messages = $q->sql("SELECT * 
+        FROM {messages} 
+        WHERE catalogue_id=? AND is_header <> 1 
+        ORDER BY msgstr != '', flags != 'fuzzy' ", $id)
+        ->fetchAll();
+			
 			foreach($messages as &$m) {
 				$m['fuzzy'] = strpos($m['flags'],'fuzzy') !== FALSE;
 				$m['is_obsolete'] = !!$m['is_obsolete'];
