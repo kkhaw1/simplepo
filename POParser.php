@@ -35,7 +35,7 @@ class DBPoMsgStore implements PoMsgStore {
 		$msg['is_header'] = $isHeader ? 1 : 0;
 
     $q->sql("DELETE FROM {messages} 
-						WHERE  catalogue_id=? AND msgid=?",
+						WHERE  catalogue_id=? AND BINARY msgid= BINARY ?",
 						$this->catalogue_id,$msg["msgid"])
 						->execute();
     $q->sql("INSERT INTO {messages} 
