@@ -33,9 +33,10 @@
 			/* this is a preformance hack.  We precalculate the text we are going to compare, and 
 			 	 pass that to the sort function.  This is much faster, than including this code in the sort
 			*/	
+			var re = /<[^>]*>/g;
 			for(var i in arrayRows) {
 				arrayRows[i] = {"dom_element":arrayRows[i],
-												"compare_text":$('td',arrayRows[i])[column].innerHTML
+												"compare_text":$('td',arrayRows[i])[column].innerHTML.replace(re,'')
 												};
 			}
 			
