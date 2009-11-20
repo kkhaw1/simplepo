@@ -1,8 +1,8 @@
 <?php
 // A really simple json RPC interface
-
-require_once('config.php');
-require_once('DB.php');
+require_once 'env_fix.php';
+require_once 'config.php';
+require_once 'DB.php';
 
 $rpc = new JSON_RPC(new MessageService());
 echo $rpc->getResponse($_POST["request"]);
