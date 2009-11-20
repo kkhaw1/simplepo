@@ -297,11 +297,9 @@
             $("<option />").attr('id',data[i]['id']).text(data[i]['name'])
                            .appendTo($('#catalogue_list'))
                            .attr('selected',data[i]['id'] == catId ? 'selected' : '');
-        }
-        if (catId > 0 && catId < data.length + 1){
-          $('#cat_name').text(data[catId-1]['name']);
-        } else {
-          NotificationObj.showError("Catalogue [" + catId + "] Not Found.");
+			if (data[i]['id'] == catId) {
+				$('#cat_name').text(data[i]['name']);
+			}
         }
       });
     };
